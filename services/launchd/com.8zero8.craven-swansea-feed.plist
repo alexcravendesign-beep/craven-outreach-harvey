@@ -2,7 +2,8 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <!-- Studio-side Swansea licensing feed: fetches www.swansea.gov.uk (which 403s the mini)
      with the collector's own Fetcher and scps the drop-folder layout to the mini.
-     Installed copy: ~/Library/LaunchAgents/com.8zero8.craven-swansea-feed.plist on the Studio.
+     Installed copy: ~/Library/LaunchAgents/com.8zero8.craven-swansea-feed.plist on the Studio, running from the
+     stable clone ~/Projects/craven-outreach-feed (branch craven; git pull there to update the feed).
      Load:   launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.8zero8.craven-swansea-feed.plist
      Run now: launchctl kickstart gui/$(id -u)/com.8zero8.craven-swansea-feed -->
 <plist version="1.0">
@@ -11,14 +12,14 @@
     <string>com.8zero8.craven-swansea-feed</string>
     <key>ProgramArguments</key>
     <array>
-        <string>/private/tmp/claude-501/-Users-nicklewis/1a388c82-ea86-48db-a88a-edb16b275236/scratchpad/work/craven-outreach-harvey/.venv/bin/python</string>
+        <string>/Users/nicklewis/Projects/craven-outreach-feed/.venv/bin/python</string>
         <string>-m</string>
         <string>harvey.craven.collectors.swansea_feed</string>
         <string>--deliver</string>
         <string>nick@100.124.56.4:~/Projects/craven-outreach/app</string>
     </array>
     <key>WorkingDirectory</key>
-    <string>/private/tmp/claude-501/-Users-nicklewis/1a388c82-ea86-48db-a88a-edb16b275236/scratchpad/work/craven-outreach-harvey</string>
+    <string>/Users/nicklewis/Projects/craven-outreach-feed</string>
     <key>EnvironmentVariables</key>
     <dict>
         <key>PATH</key>
@@ -34,8 +35,8 @@
     <key>RunAtLoad</key>
     <false/>
     <key>StandardOutPath</key>
-    <string>/private/tmp/claude-501/-Users-nicklewis/1a388c82-ea86-48db-a88a-edb16b275236/scratchpad/work/craven-outreach-harvey/data/licensing/swansea/feed.log</string>
+    <string>/Users/nicklewis/Projects/craven-outreach-feed/data/licensing/swansea/feed.log</string>
     <key>StandardErrorPath</key>
-    <string>/private/tmp/claude-501/-Users-nicklewis/1a388c82-ea86-48db-a88a-edb16b275236/scratchpad/work/craven-outreach-harvey/data/licensing/swansea/feed.log</string>
+    <string>/Users/nicklewis/Projects/craven-outreach-feed/data/licensing/swansea/feed.log</string>
 </dict>
 </plist>
