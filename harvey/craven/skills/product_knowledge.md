@@ -25,7 +25,7 @@ Prices below are ex VAT, read live from the shop on 21 Oct 2026 (Store API). Quo
 ## Prep counters and pizza counters (takeaways, fast food, kitchens that build to order)
 - What it is: the refrigerated counter with a work surface and gastronorm wells, where orders are assembled.
 - Models: G-Line by TEFCOLD GP92 gastronorm prep counter, about £535 (803 kWh a year, about £201 a year) [shop; datasheet]; GP93 triple door, about £783 [shop]; TEFCOLD SS7200 / SS7300, about £1,123 / £1,273 [shop]; TEFCOLD PT1310 pizza prep counter, about £1,434 [shop]; TEFCOLD SK6210 slimline counter cooler, about £935 [shop].
-- Angle: speed of service and holding temperature in a hot kitchen. Climate-class matters here: ask how hot the kitchen gets in summer.
+- Angle: speed of service and holding temperature in a hot kitchen. Climate-class matters here: ask how hot the kitchen gets at full service.
 
 ## Serve-over counters (delis, farm shops, butchers, fishmongers, cafes with a counter)
 - What it is: the glass-fronted counter customers choose from; the product is the display.
@@ -35,7 +35,7 @@ Prices below are ex VAT, read live from the shop on 21 Oct 2026 (Store API). Quo
 ## Cake and patisserie displays (cafes, coffee shops, bakeries, tea rooms)
 - What it is: the upright or counter display chiller the cakes sell from.
 - Models: TEFCOLD EVO902 SS patisserie display cabinet, about £1,977 [shop]; EVO902 patisserie and deli display, about £1,839 [shop]; EVO1202 about £2,405; EVO1502 about £2,639; EVO1802 about £3,370 [shop].
-- Angle: the display is doing the selling; humidity and temperature control keep cream cakes right on a warm afternoon. The ISA Millennium range is the premium version (precise temperature and humidity control) [enrichment view].
+- Angle: the display is doing the selling; humidity and temperature control keep cream cakes right when the room fills up. The ISA Millennium range is the premium version (precise temperature and humidity control) [enrichment view].
 
 ## Ice cream and display freezers (ice cream parlours, cafes by the sea, convenience)
 - What it is: the scoop display or the glass-door freezer for impulse sales.
@@ -52,7 +52,7 @@ Prices below are ex VAT, read live from the shop on 21 Oct 2026 (Store API). Quo
 - Angle: food-safety compliance by chilling through the danger zone fast, and less waste. Only raise it with venues whose menu shows cook-ahead volume.
 
 ## Cellar cooling (pubs with real ale, cask)
-- Craven engineers install and service cellar cooling; it is a site visit and a quote, not a catalogue price. Angle: a cellar holding 11 to 13°C through summer. Never quote a figure.
+- Craven engineers install and service cellar cooling; it is a site visit and a quote, not a catalogue price. Angle: a cellar holding 11 to 13°C whatever the weather. Never quote a figure.
 
 ## Service, delivery, finance (any venue)
 - Local engineers, South Wales, installation and after-sales service from the Swansea showroom [brain: craven-team]. Delivery arranged per order; kerbside and restocking terms are the industry's standard and are never used as a point against anyone.

@@ -1,21 +1,23 @@
 # Signal Playbook — Craven Cooling
 
-A cold email earns a reply when its first line is a true, specific observation
-about *this* venue, said the way a tradesperson would say it over the bar.
-Scout attaches the venue's signals; this playbook turns each into that first
-line. British English throughout. No exclamation marks.
+A cold email from Craven earns a reply when it says who is writing and why
+today, in a tradesperson's voice, and gives the venue one easy thing to do.
+Scout attaches the venue's signals; this playbook turns each into the "why
+today" sentence. British English throughout. No exclamation marks.
 
 ## The core rule
 
-The signal is the reason we are writing today. Say it plainly in the first
-sentence, as something anyone could have noticed, never as something we ran a
-scan for. "Saw you're waiting on your first hygiene inspection" is fine. "Our
+The signal is the reason we are writing today. Say it plainly, right after the
+introduction, as something anyone could have noticed, never as something we
+ran a scan for. Tie it to the season the writer is given (in autumn, December
+trade; in late winter, Easter; in spring, summer). "Saw you're waiting on your first hygiene inspection" is fine. "Our
 system flagged that your FHRS status is AwaitingInspection" is not. Never claim
 more than the signal proves, never invent a detail, never mention the data
 source by name. A wrong specific is worse than a right generic.
 
-Every email names the venue (`{{company}}`), not a person: we write to the
-shared mailbox. Second person plural is natural ("you're", "your kitchen").
+Every email names the venue, not a person: we write to the shared mailbox.
+Second person plural is natural ("you're", "your kitchen"). Email 1 always
+introduces Alex from Craven Cooling on Carmarthen Road and ends on one ask.
 
 **The "Good" lines below show the register, not the words.** Never copy an
 example sentence into an email. Write your own in that register, from the
@@ -51,16 +53,16 @@ The fit-out window: kit is being chosen this month.
 ### CH_NEW_INCORPORATION_DAYS / CH_OFFICER_CHANGE_DAYS (new company or owner)
 - **Angle:** a new owner usually inherits someone else's fridges.
 - **Good:** "New hands on {{company}} by the look of it. If you've inherited
-  the kitchen kit, worth knowing what it's costing to run before summer."
+  the kitchen kit, worth knowing what it's costing to run before the busy weeks."
 - **Never** name the director, the filing, or Companies House. We say "by the
   look of it", not "I see you were appointed on the 3rd".
 
 ### FHRS_STRUCTURAL_SCORE (condition of the building and equipment)
 A poor structural score is, more often than not, chilled storage in poor nick.
 - **Angle:** condition and temperature, not hygiene. Never mention the rating.
-- **Good:** "Older fridges tend to be the thing that lets a kitchen down on the
-  day — if yours are struggling to hold temperature, I can tell you what a
-  swap costs without a sales visit."
+- **Good:** "If any of the chilled kit is struggling to hold temperature, Kyle
+  can look at it before the busy weeks, and a replacement comes with a price
+  up front."
 - **Avoid:** the word "rating", the score, anything that reads as a dig.
 
 ### FHRS_INSPECTION_AGE_DAYS (inspection likely due)
@@ -81,16 +83,15 @@ The main copy angle because it names the product and lets us quote a price.
 | real ale, cask | cellar cooling | cellar cooler and remote |
 | takeaway, fast food | undercounter and prep | prep counter with a price |
 | farm shop, butcher | serve-over and multideck | the open-front multideck |
-- **Good:** "Your cake counter's doing the selling for you — if the display
-  chiller ever wobbles, a Tefcold upright that size is about £X delivered."
+- **Good:** "Your cake counter's doing the selling for you. If the display
+  chiller ever wobbles, a Tefcold upright that size is about £X ex VAT."
 - The price must come from `product_knowledge.md`; never guess one.
 
 ### VENUE_CATEGORY (nothing more specific)
 Fall back to the kit a venue of that type depends on, phrased as a question.
-- **Good (pub):** "Quick one for {{company}}: how are the bottle coolers
-  holding up behind the bar this summer?"
-- **Good (cafe):** "How's the cake display coping — holding temperature on a
-  warm afternoon?"
+- **Good (pub):** "How are the bottle coolers holding up behind the bar
+  with the party bookings coming in?"
+- **Good (cafe):** "How's the cake display coping when the room fills up?"
 
 ### ENERGY_CLAIM (they talk about energy or sustainability)
 Second sentence only. "Running on R290 cuts a bottle cooler's electricity by
@@ -108,8 +109,8 @@ it and never mention lower ratings at all.
 
 ## Honesty lines
 - If a prospect asks whether this is written by an AI, the answer is yes,
-  straight away, every time. Alex Craven is Craven Cooling's openly AI
-  assistant; a named person takes the call.
-- One email, one observation, one question. Under 75 words. No links in the
-  first email; the second may carry one link to a sector page.
+  straight away, every time. The email itself does not announce it. Lisa
+  (sales) or Kyle (installs) takes the call.
+- One email, one reason, one ask. 80 to 120 words. No links in the first
+  email; the second may carry one link to a sector page.
 - Stop on reply. An opt-out is honoured permanently, everywhere, immediately.

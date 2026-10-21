@@ -101,6 +101,33 @@ def fact_lines(observations: list[dict]) -> tuple[list[str], str]:
     return lines, lead
 
 
+def season_lines(today=None) -> list[str]:
+    """The date and what trade is coming, so the model never writes about the
+    wrong season."""
+    from datetime import date
+    d = today or date.today()
+    m = d.month
+    if m in (10, 11):
+        coming = "late autumn; the Christmas party bookings and December trade are a few weeks away, the busiest fortnight of the year for any kitchen or bar"
+    elif m == 12:
+        coming = "December; the Christmas trade is on now and kit that fails this month costs a fortnight of takings"
+    elif m in (1, 2):
+        coming = "the quiet weeks after Christmas; the time venues replace tired kit before Easter and the spring trade"
+    elif m in (3, 4, 5):
+        coming = "spring; the run-up to the summer season, when fridges work hardest"
+    elif m in (6, 7, 8):
+        coming = "summer; the hottest months for refrigeration and the busiest for coastal trade"
+    else:
+        coming = "early autumn; the summer rush is over and the Christmas bookings start soon"
+    return [f"- Today is {d.strftime('%-d %B %Y')}: {coming}."]
+
+
+SHOWROOM_FACTS = [
+    "- We are Craven Cooling, a family refrigeration firm with a showroom at Unit 1, 304 Carmarthen Road, Swansea (ten minutes from most of Swansea). Tefcold-family kit is on the floor to see before buying.",
+    "- Lisa gives prices the same day, ex VAT, with no visit needed. Kyle and the engineers install and service across South Wales and can look at tired kit before a busy period.",
+]
+
+
 class CravenWriter(Writer):
     async def _facts_for(self, prospect) -> tuple[list[str], str]:
         if not prospect.company_id:
@@ -112,25 +139,45 @@ class CravenWriter(Writer):
             return [], ""
         return fact_lines(obs)
 
+    def _email1_prompt(self, prospect, venue_facts: list[str]) -> str:
+        cfg = self.config
+        base = self.brain.load_prompt(
+            "writer",
+            product_name=cfg.product.name, product_description=cfg.product.description,
+            product_benefits="\n".join(f"- {b}" for b in cfg.product.key_benefits),
+            product_pricing=cfg.product.pricing, persona_name=cfg.persona.name,
+            persona_company=cfg.persona.company, persona_role=cfg.persona.role,
+            persona_tone=cfg.persona.tone,
+        ) or ""
+        if self.skills:
+            base += "\n\n" + self.skills
+        facts = [f"- Venue: {prospect.company or 'the venue'} (this goes to its shared mailbox; no first name exists)"]
+        facts += venue_facts + season_lines() + SHOWROOM_FACTS
+        return base + f"""
+
+Write the FIRST email Craven Cooling sends to this venue, following the CRAVEN COOLING RULES above
+(four parts: who is writing and where from; why today, from the LEAD fact and the season; what we can
+do for them, concretely; one easy ask). 80 to 120 words. Plain text. No links.
+
+FACTS (everything you may say about them and about us; nothing else exists):
+{chr(10).join(facts)}
+
+Return ONLY JSON: {{"subject": "...", "body": "..."}}"""
+
     async def _write_personal_email(self, prospect) -> dict | None:
-        facts, lead = await self._facts_for(prospect)
-        if not facts:
+        venue_facts, lead = await self._facts_for(prospect)
+        if not venue_facts:
             logger.info(f"Writer (Craven): no usable signal for {prospect.company}; no draft.")
             return None
-        # Borrow upstream's prompt assembly by letting it run with our facts
-        # stitched into personalization_notes, then strip them back out.
-        original_notes = prospect.personalization_notes
-        prospect.personalization_notes = (
-            "VENUE FACTS (the only things you may say about them; lead with LEAD):\n" + "\n".join(facts)
-            + "\n- Venue name: " + (prospect.company or "the venue")
-            + "\n- This goes to the venue's shared mailbox: no first name exists. Open with the observation.")
-        try:
-            draft = await super()._write_personal_email(prospect)
-        finally:
-            prospect.personalization_notes = original_notes
-        if draft:
-            draft["lead"] = lead
-        return draft
+        result = await self.brain.think_json(self._email1_prompt(prospect, venue_facts),
+                                             session_id="harvey-writer", agent="writer", task="personal_email")
+        if not isinstance(result, dict):
+            return None
+        subject = str(result.get("subject") or "").strip()
+        body = str(result.get("body") or "").strip()
+        if not subject or not body:
+            return None
+        return {"subject": subject[:120], "body": body[:2000], "lead": lead}
 
 
 async def draft_one(state, brain, config, env, company_id: str, *, settings=None) -> dict | None:
