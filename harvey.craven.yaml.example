@@ -40,7 +40,7 @@ icp:
   industries: [pub, bar, cafe, restaurant, hotel, fast_food, butcher, farm_shop, convenience, deli, bakery]
   company_size: "1-3 sites"
   titles: ["Owner", "Licensee", "General Manager", "Head Chef"]
-  geography: ["SA5", "SA1", "SA6"]                         # outcode prefixes around the Swansea showroom (pilot area: Nick to confirm)
+  geography: ["SA1", "SA2", "SA3", "SA4", "SA5", "SA6", "SA7", "SA8", "SA9", "SA10", "SA11", "SA12", "SA13", "SA14", "SA15", "SA16", "SA17", "SA18", "SA19", "SA20", "CF31", "CF32", "CF33", "CF34", "CF35", "CF36"]   # Llanelli to Bridgend (Nick, 21 Oct 2026)
   hiring_signals: []
 
 channels:
@@ -79,7 +79,7 @@ craven:
   tenant: craven
   compliance:
     lia_ref: ""                                            # set by `harvey craven lia sign` (M1)
-    corporate_subscribers_only: true
+    corporate_subscribers_only: true                       # business mailboxes only: role local part, the venue's own domain, or named after the venue
     unsubscribe_base_url: ""                               # public URL of the unsubscribe service (M2)
     max_mirror_age_hours: 24
     sender_legal_name: "Craven Cooling Services Ltd"
