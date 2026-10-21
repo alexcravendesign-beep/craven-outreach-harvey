@@ -30,6 +30,9 @@ def install(config, raw: dict) -> None:
     """Harvey's plugin entry point. Idempotent: load_plugins calls it once."""
     global SETTINGS
     SETTINGS = parse_craven_config(raw.get("craven") or {})
+    from harvey import main
+    from harvey.craven.sender import CravenSender
+    main.AGENT_OVERRIDES["sender"] = CravenSender
     logger.info(
         "Craven plugin installed (tenant=%s, corporate_subscribers_only=%s)",
         SETTINGS.tenant, SETTINGS.compliance.corporate_subscribers_only,

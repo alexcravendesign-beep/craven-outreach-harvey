@@ -54,10 +54,13 @@ def pre_send_check(
     allow_risky: bool = False,
     kind: str = "sequence",
     postal_address: str = "",
+    exempt_link_prefixes: tuple[str, ...] = (),
 ) -> GateResult:
     """Run every deterministic check. Returns ok=False with reasons on any hit.
 
     postal_address: when set, a cold (sequence) email must carry it (CAN-SPAM).
+    exempt_link_prefixes: links starting with one of these (an operator's own
+        unsubscribe URL) don't count toward the link budget; content links still do.
     """
     reasons: list[str] = []
     subject = (subject or "").strip()
@@ -104,7 +107,8 @@ def pre_send_check(
         reasons.append(f"banned phrases: {hits[:3]}")
 
     # Link budget: cold email with links goes to spam
-    links = URL_RE.findall(body)
+    links = [u for u in URL_RE.findall(body)
+             if not any(u.lower().startswith(p.lower()) for p in exempt_link_prefixes if p)]
     if len(links) > MAX_LINKS:
         reasons.append(f"too many links ({len(links)} > {MAX_LINKS})")
 

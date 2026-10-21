@@ -47,6 +47,7 @@ Changelog = "https://github.com/ethanplusai/harvey/blob/main/CHANGELOG.md"
 
 [project.scripts]
 harvey = "harvey.cli:main"
+harvey-craven = "harvey.craven.cli:main"
 
 [tool.setuptools.packages.find]
 include = ["harvey*"]

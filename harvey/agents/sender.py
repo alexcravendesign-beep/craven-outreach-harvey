@@ -86,6 +86,9 @@ class Sender:
         self.extra_gates: list = []
         self.body_finalizers: list = []
         self.cold_send_window = None
+        # Links a finalizer adds (an unsubscribe URL) that the built-in gate's
+        # link budget must not count; content links still count.
+        self.exempt_link_prefixes: tuple = ()
 
     @property
     def is_native(self) -> bool:
@@ -543,6 +546,7 @@ class Sender:
             item["to_email"], item["subject"], body,
             prospect=prospect, allow_risky=allow_risky, kind=item["kind"],
             postal_address=compliance_of(self.config).postal_address,
+            exempt_link_prefixes=self.exempt_link_prefixes,
         )
         if not gate:
             logger.warning(
