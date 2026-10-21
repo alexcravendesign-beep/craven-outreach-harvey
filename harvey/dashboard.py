@@ -26,6 +26,7 @@ logger = logging.getLogger("harvey.dashboard")
 
 from harvey import dashboard_auth as auth  # noqa: E402
 from harvey.paths import PROJECT_ROOT  # noqa: E402
+from harvey.config import load_plugins_best_effort  # noqa: E402
 from harvey.textio import read_user_text  # noqa: E402
 DB_PATH = PROJECT_ROOT / "data" / "harvey.db"
 ENV_FILE = PROJECT_ROOT / ".env"
@@ -40,8 +41,7 @@ def _resolve_config_file() -> Path:
     loader, so the dashboard doesn't judge setup complete against the
     tracked harvey.yaml template while the real trained config sits in the
     gitignored local override."""
-    from harvey.config import load_plugins_best_effort
-from harvey.config import _find_config_file, ConfigFileNotFoundError
+    from harvey.config import _find_config_file, ConfigFileNotFoundError
     try:
         return Path(_find_config_file())
     except ConfigFileNotFoundError:
