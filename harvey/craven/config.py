@@ -47,6 +47,9 @@ class CravenEnrichmentConfig(BaseModel):
     fhrs_authority_ids: list[int] = [351, 346, 341, 349]  # Swansea, Neath Port Talbot, Carmarthenshire, Powys
     fhrs_cache_days: int = 7
     fhrs_match_floor: float = 0.85
+    # Establishments this close to the venue's own coordinates are candidates
+    # even when the register spells the postcode differently.
+    fhrs_match_radius_m: float = 120.0
     # Companies House: hospitality SIC codes and the area for the new-company sweep.
     companies_house_sic: list[str] = ["56101", "56102", "56103", "56301", "55100", "47110"]
     companies_house_location: str = "Swansea"
