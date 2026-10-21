@@ -40,7 +40,8 @@ def _resolve_config_file() -> Path:
     loader, so the dashboard doesn't judge setup complete against the
     tracked harvey.yaml template while the real trained config sits in the
     gitignored local override."""
-    from harvey.config import _find_config_file, ConfigFileNotFoundError
+    from harvey.config import load_plugins_best_effort
+from harvey.config import _find_config_file, ConfigFileNotFoundError
     try:
         return Path(_find_config_file())
     except ConfigFileNotFoundError:
@@ -1633,6 +1634,7 @@ async def get_today():
 
         state = _state()
         await state.init_db()
+        load_plugins_best_effort()  # a plugin may extend the catalogue
         await seed_signal_catalog(state)
 
         codes = await state.get_signal_codes()
@@ -1785,6 +1787,7 @@ async def get_signals():
         # Seeding is idempotent and never overrides a decision the user made,
         # so it is safe to run on every load — new signals shipped in an
         # upgrade show up as `proposed` without any migration step.
+        load_plugins_best_effort()  # a plugin may extend the catalogue
         await seed_signal_catalog(state)
 
         codes = await state.get_signal_codes()
@@ -1844,6 +1847,7 @@ async def set_signals_status(request: Request):
         await state.init_db()
         # Seed first: a confirm that arrives before anything has loaded the
         # catalog would otherwise report success while changing nothing.
+        load_plugins_best_effort()  # a plugin may extend the catalogue
         await seed_signal_catalog(state)
 
         changed, unknown = 0, []

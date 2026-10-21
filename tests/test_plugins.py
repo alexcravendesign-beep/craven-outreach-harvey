@@ -227,3 +227,39 @@ async def test_reply_may_go_to_the_person_who_wrote_not_the_shared_mailbox(state
     reply = pre_send_check("jo@swan.pub", "Re: hi", "note", prospect=prospect, kind="reply")
     assert not cold and "does not match" in " ".join(cold.reasons)
     assert reply
+
+
+# ── plugin-extended catalogue reaches the database from the commands that seed it ──
+
+
+@pytest.mark.asyncio
+async def test_signals_seeding_includes_a_plugins_codes_once_config_loads(tmp_path, monkeypatch):
+    from harvey import signals as harvey_signals
+    from harvey.signals import seed_signal_catalog
+
+    catalogue_before = list(harvey_signals.SIGNAL_CATALOG)
+    monkeypatch.setattr(harvey_signals, "SIGNAL_CATALOG", list(catalogue_before))
+
+    def install(cfg, raw):
+        harvey_signals.SIGNAL_CATALOG.append({
+            "code": "PLUGIN_SIGNAL", "label": "From a plugin", "description": "x" * 50,
+            "category": "profile", "value_type": "bool", "collector": "plugin",
+            "cost_note": "free (plugin)", "confidence_floor": 0.0})
+    _fake_module("fake_plugin_e", install=install)
+    path = _write_config(tmp_path, "[fake_plugin_e]")
+    monkeypatch.setattr(config_mod, "_find_config_file", lambda: path)
+
+    assert config_mod.load_plugins_best_effort() is True
+    with tempfile.TemporaryDirectory() as tmpdir:
+        sm = StateManager(os.path.join(tmpdir, "t.db"))
+        await sm.init_db()
+        await seed_signal_catalog(sm)
+        codes = {r["code"] for r in await sm.get_signal_codes()}
+    assert "PLUGIN_SIGNAL" in codes
+
+
+def test_best_effort_load_without_a_config_file_is_quiet(monkeypatch):
+    def missing():
+        raise config_mod.ConfigFileNotFoundError("none")
+    monkeypatch.setattr(config_mod, "_find_config_file", missing)
+    assert config_mod.load_plugins_best_effort() is False

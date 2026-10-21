@@ -503,6 +503,8 @@ def cmd_outbox(args):
 def cmd_profile(args):
     """Read what companies' own websites say about them. Free, no Claude calls."""
     from harvey.state import StateManager
+    from harvey.config import load_plugins_best_effort
+    load_plugins_best_effort()  # a plugin may extend the catalogue
     from harvey.pipeline import run_profile_stage
 
     async def _profile():
@@ -616,8 +618,11 @@ def cmd_signals(args):
     Nothing is collected until a signal is confirmed, so a fresh install
     prospects against nothing until someone makes these decisions.
     """
+    from harvey.config import load_plugins_best_effort
     from harvey.state import StateManager
     from harvey.signals import seed_signal_catalog
+
+    load_plugins_best_effort()  # a plugin may extend the catalogue
 
     async def _signals():
         state = StateManager()

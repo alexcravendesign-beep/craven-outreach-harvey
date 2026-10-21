@@ -619,6 +619,22 @@ def load_config(config_path: str | None = None) -> HarveyConfig:
     return config
 
 
+def load_plugins_best_effort() -> bool:
+    """Load the config (and so its plugins) when it exists and is valid; say
+    why when it doesn't, and carry on. For commands that read the signal
+    catalogue (which plugins extend) but work without a finished product
+    config: `harvey signals`, `harvey profile`, the dashboard's Signals tab.
+    """
+    try:
+        load_config()
+        return True
+    except ConfigFileNotFoundError:
+        logger.debug("No config file yet; plugin signals (if any) not loaded.")
+    except (ConfigError, ValidationError) as e:
+        logger.warning(f"Config not loadable, so plugin signals are not seeded: {str(e)[:160]}")
+    return False
+
+
 def load_brain_config(config_path: str | None = None) -> BrainConfig:
     """Read just the ``brain:`` section, without validating the rest.
 
