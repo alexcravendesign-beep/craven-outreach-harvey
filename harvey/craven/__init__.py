@@ -31,8 +31,12 @@ def install(config, raw: dict) -> None:
     global SETTINGS
     SETTINGS = parse_craven_config(raw.get("craven") or {})
     from harvey import main
+    from harvey.craven.handler import CravenHandler
     from harvey.craven.sender import CravenSender
+    from harvey.craven.signals import install_signals
     main.AGENT_OVERRIDES["sender"] = CravenSender
+    main.AGENT_OVERRIDES["handler"] = CravenHandler
+    install_signals()
     logger.info(
         "Craven plugin installed (tenant=%s, corporate_subscribers_only=%s)",
         SETTINGS.tenant, SETTINGS.compliance.corporate_subscribers_only,

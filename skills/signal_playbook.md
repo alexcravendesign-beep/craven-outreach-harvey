@@ -1,88 +1,109 @@
-# Signal-Based Outreach Playbook
+# Signal Playbook — Craven Cooling
 
-The single biggest lever on cold-email reply rates is *relevance at the
-moment of need*. Emails that reference a real, current signal get **5-18%
-replies vs 1-3%** for generic ICP-matched outreach. Scout attaches signals
-to prospects (in `personalization_notes` and on the company record); this
-playbook says how to turn each signal into a first line that earns a reply.
+A cold email earns a reply when its first line is a true, specific observation
+about *this* venue, said the way a tradesperson would say it over the bar.
+Scout attaches the venue's signals; this playbook turns each into that first
+line. British English throughout. No exclamation marks.
 
 ## The core rule
 
-The signal is the *reason you're emailing them today* — say it plainly, in
-the first sentence, as an observation. Never dress it up ("I was so
-impressed to see..."). Never claim more than the signal proves. If the only
-signal is "they exist and match the ICP," you don't have a signal — fall
-back to a role/industry problem observation, and keep it honest.
+The signal is the reason we are writing today. Say it plainly in the first
+sentence, as something anyone could have noticed, never as something we ran a
+scan for. "Saw you're waiting on your first hygiene inspection" is fine. "Our
+system flagged that your FHRS status is AwaitingInspection" is not. Never claim
+more than the signal proves, never invent a detail, never mention the data
+source by name. A wrong specific is worse than a right generic.
 
-Every claim in the email must trace to a signal or a stored fact. No
-invented funding rounds, no "saw your post" unless the notes say so, no
-fabricated metrics. A wrong specific is worse than a right generic.
+Every email names the venue (`{{company}}`), not a person: we write to the
+shared mailbox. Second person plural is natural ("you're", "your kitchen").
 
-## Signal → angle map
+## Which signal leads
 
-### Hiring signal (they're hiring for a relevant role)
-The strongest, most actionable signal. A company hiring a Head of Growth is
-buying growth tooling *right now*; the person you're emailing owns that
-problem this quarter.
+When a venue has several, the first line uses the first match in this order:
 
-- **Angle**: the workload behind the hire, not the hire itself.
-- **Good**: "Saw you're hiring a second SDR. Usually means the first one is
-  buried — how are you handling reply volume while the seat's open?"
-- **Bad**: "Congrats on the new role posting!" (flattery, no substance)
-- Only reference the specific role if the notes name it. "Hiring in growth"
-  is fine; inventing "hiring 3 AEs" is not.
+1. **FHRS_AWAITING_INSPECTION** — a new venue, fitting out now.
+2. **CH_NEW_INCORPORATION_DAYS** under 120 — same story from Companies House.
+3. **CH_OFFICER_CHANGE_DAYS** under 180 — new owner or manager, refit likely.
+4. **FHRS_STRUCTURAL_SCORE** of 10 or worse — condition of equipment.
+5. **FHRS_INSPECTION_AGE_DAYS** over 540 — inspection likely due.
+6. **MENU_EQUIPMENT_CLASS** — what their menu says they run.
+7. **VENUE_CATEGORY** alone — the kit a venue of that kind lives on.
 
-### Tech-stack signal (a tool detected on their site)
-You know something concrete about how they operate. Use it to place your
-product in their actual stack, or to point at a gap.
+Everything else (ENERGY_CLAIM, FHRS_RATING of 5, FHRS_BUSINESS_TYPE) colours
+the second sentence or the follow-up; it does not lead.
 
-- **Angle**: integration, migration, or a gap next to what they run.
-- **Good (present)**: "You're on HubSpot — so this plugs into the workflow
-  your team already lives in rather than adding another tab."
-- **Good (gap)**: "Noticed there's no chat widget on your pricing page.
-  How are you catching the people who get that far but don't fill out the
-  form?"
-- **Bad**: listing their whole stack back at them (creepy, and it reads as
-  scraped). Reference at most one tool, and only if it's load-bearing to
-  the point.
+## Signal → first line
 
-### Funding signal (recent raise)
-60-90 days post-raise is peak buying window. But everyone emails post-raise
-companies, so the bar for specificity is higher.
+### FHRS_AWAITING_INSPECTION (new venue)
+The fit-out window: kit is being chosen this month.
+- **Angle:** get the chilled storage right before the inspector sees it.
+- **Good:** "Looks like {{company}} is opening soon — are you sorted for
+  fridges and the bottle cooler yet, or still pricing it up?"
+- **Avoid:** congratulations, "exciting times", anything about the inspection
+  being scary.
 
-- **Angle**: the specific pressure the raise creates (hiring fast, new
-  targets, scaling a motion), not "congrats on the round."
-- **Good**: "Post-Series-A usually means the pipeline target just doubled
-  overnight. Is outbound the gap, or is it converting what's already coming
-  in?"
-- **Bad**: "Congratulations on your recent funding!" (every vendor sent
-  that the same week).
+### CH_NEW_INCORPORATION_DAYS / CH_OFFICER_CHANGE_DAYS (new company or owner)
+- **Angle:** a new owner usually inherits someone else's fridges.
+- **Good:** "New hands on {{company}} by the look of it. If you've inherited
+  the kitchen kit, worth knowing what it's costing to run before summer."
+- **Never** name the director, the filing, or Companies House. We say "by the
+  look of it", not "I see you were appointed on the 3rd".
 
-### New-domain / new-business signal
-They just started up. Relevant only if you sell to early-stage/new
-businesses.
+### FHRS_STRUCTURAL_SCORE (condition of the building and equipment)
+A poor structural score is, more often than not, chilled storage in poor nick.
+- **Angle:** condition and temperature, not hygiene. Never mention the rating.
+- **Good:** "Older fridges tend to be the thing that lets a kitchen down on the
+  day — if yours are struggling to hold temperature, I can tell you what a
+  swap costs without a sales visit."
+- **Avoid:** the word "rating", the score, anything that reads as a dig.
 
-- **Angle**: the thing they haven't set up yet that you provide.
-- Keep it low-key — a brand-new company is drowning in vendor pitches.
+### FHRS_INSPECTION_AGE_DAYS (inspection likely due)
+- **Angle:** temperature records and reliability, offered as help.
+- **Good:** "If you're due a visit this year, the two things that get asked
+  about are temperature logs and whether the fridges actually hold 5°C. Happy
+  to send a one-page checklist."
+- Only when the age is over about 18 months; otherwise it is not a signal.
 
-## Which signal wins when there are several
+### MENU_EQUIPMENT_CLASS (what the menu names)
+The main copy angle because it names the product and lets us quote a price.
+| On the menu or site | They run | Lead with |
+|---|---|---|
+| gelato, ice cream, sorbet | display freezer | the display they sell from |
+| bottle bar, craft cans, wine by the glass | bottle coolers, back-bar | glass-door bottle cooler, price inline |
+| deli counter, fresh fish, cured meats | serve-over | a serve-over sized to the counter |
+| cakes, patisserie, bakes | display chiller | an upright cake display |
+| real ale, cask | cellar cooling | cellar cooler and remote |
+| takeaway, fast food | undercounter and prep | prep counter with a price |
+| farm shop, butcher | serve-over and multideck | the open-front multideck |
+- **Good:** "Your cake counter's doing the selling for you — if the display
+  chiller ever wobbles, a Tefcold upright that size is about £X delivered."
+- The price must come from `product_knowledge.md`; never guess one.
 
-Rank by recency and actionability: **hiring > funding > tech-gap >
-tech-present > industry problem > nothing**. Use exactly ONE signal as the
-hook. Stacking two ("you raised AND you're hiring AND you use X") reads as a
-dossier and kills the human feel. Bank the others for follow-ups.
+### VENUE_CATEGORY (nothing more specific)
+Fall back to the kit a venue of that type depends on, phrased as a question.
+- **Good (pub):** "Quick one for {{company}}: how are the bottle coolers
+  holding up behind the bar this summer?"
+- **Good (cafe):** "How's the cake display coping — holding temperature on a
+  warm afternoon?"
 
-## Following up on a signal
+### ENERGY_CLAIM (they talk about energy or sustainability)
+Second sentence only. "Running on R290 cuts a bottle cooler's electricity by
+about a third" — only with the figure from `product_knowledge.md`.
 
-- Email 2 can take a *different* signal or a proof point — never repeat
-  email 1's hook.
-- If the signal has aged (a 4-month-old job post that's now filled), don't
-  reference it as current. Stale specifics destroy credibility.
+### FHRS_RATING of 5
+Second sentence, as respect: "You clearly run a tight kitchen." Never lead on
+it and never mention lower ratings at all.
 
-## When you have no real signal
+## Signals we do not use in copy
+- **ROLE_MAILBOX, INDEPENDENT_VENUE, CH_INCORPORATED** are filters and
+  compliance facts, not angles. They never appear in an email.
+- **FHRS_HYGIENE_SCORE / FHRS_MANAGEMENT_SCORE** inform whether to send; they
+  are never quoted or alluded to. Food safety is their business, not our pitch.
 
-Be honest about it. Fall back to a genuine problem the role or industry
-faces right now — stated as an observation, not a fake personalization.
-"Most teams at your headcount still reconcile this by hand" is a true,
-useful opener.
-"I was looking at your website and love what you're doing" is not.
+## Honesty lines
+- If a prospect asks whether this is written by an AI, the answer is yes,
+  straight away, every time. Alex Craven is Craven Cooling's openly AI
+  assistant; a named person takes the call.
+- One email, one observation, one question. Under 75 words. No links in the
+  first email; the second may carry one link to a sector page.
+- Stop on reply. An opt-out is honoured permanently, everywhere, immediately.

@@ -407,6 +407,7 @@ class Handler:
                 agent="handler",
                 details={"prospect_email": lead_email},
             )
+            await self.on_opt_out(prospect, lead_email)
             logger.info(f"Handler: {lead_email} opted out. Suppressed permanently. No reply sent.")
             return
 
@@ -557,6 +558,14 @@ class Handler:
             logger.info("Handler: no new replies.")
         return complete
 
+    async def on_bounce(self, prospect, msg) -> None:
+        """Hook for a plugin: a sent email to ``prospect`` bounced (already
+        marked invalid and its queue cancelled). Default: nothing."""
+
+    async def on_opt_out(self, prospect, lead_email: str) -> None:
+        """Hook for a plugin: ``lead_email`` asked to stop (prospect already
+        opted_out). Default: nothing."""
+
     async def _handle_bounce(self, msg):
         """A bounce is a data bug AND a reputation threat. Fix both."""
         outbox_item = await self.state.find_outbox_by_message_id(msg.in_reply_to)
@@ -575,6 +584,7 @@ class Handler:
                 f"Handler: BOUNCE for {prospect.email} — marked invalid, "
                 f"cancelled {cancelled} queued email(s)."
             )
+            await self.on_bounce(prospect, msg)
         else:
             logger.warning(
                 f"Handler: bounce received ({msg.subject[:60]}) but couldn't "
