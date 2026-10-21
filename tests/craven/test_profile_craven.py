@@ -42,3 +42,16 @@ async def test_collector_adds_menu_class_and_energy_claim_without_refetching_hom
     assert obs["MENU_EQUIPMENT_CLASS"]["evidence_url"] == "https://theswan.pub/menu"
     assert obs["ENERGY_CLAIM"]["value_num"] == 1.0
     assert all(o["collector"] == "profile" for o in obs.values())
+
+
+@pytest.mark.asyncio
+async def test_collector_never_renames_a_venue(state):
+    collector = CravenProfileCollector(state, confirmed=set())
+    assert await collector._improve_name({"id": "c1", "name": "The White Lion"}, "app.servedup.co") is None
+
+
+def test_booking_platforms_are_not_a_venues_website():
+    from harvey.craven.discover_overture import website_kind
+    assert website_kind("https://app.servedup.co/whitelion") == "social"
+    assert website_kind("https://www.resdiary.com/restaurant/x") == "social"
+    assert website_kind("https://theswan.pub") == "own"

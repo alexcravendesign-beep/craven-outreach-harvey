@@ -52,7 +52,9 @@ TERM_TO_CATEGORY: dict[str, list[str]] = {
 SOCIAL_HOSTS = re.compile(
     r"(^|\.)(facebook\.com|fb\.com|instagram\.com|tripadvisor\.[a-z.]+|twitter\.com|x\.com|linkedin\.com|"
     r"yelp\.[a-z.]+|just-eat\.[a-z.]+|justeat\.[a-z.]+|deliveroo\.[a-z.]+|ubereats\.com|booking\.com|"
-    r"google\.com|goo\.gl|business\.site|tiktok\.com|youtube\.com|opentable\.[a-z.]+)$")
+    r"google\.com|goo\.gl|business\.site|tiktok\.com|youtube\.com|opentable\.[a-z.]+|"
+    r"servedup\.co|tablein\.com|resdiary\.com|designmynight\.com|thefork\.[a-z.]+|order\.online|"
+    r"flipdish\.com|foodhub\.co\.uk|order-online\.[a-z.]+|hungrrr\.co\.uk|wix\.com/site)$")
 PAGE_BUILDER_HOSTS = re.compile(
     r"(^|\.)(wixsite\.com|wix\.com|squarespace\.com|weebly\.com|godaddysites\.com|webador\.[a-z.]+|"
     r"site123\.me|strikingly\.com|carrd\.co|mystrikingly\.com|yolasite\.com|jimdosite\.com)$")

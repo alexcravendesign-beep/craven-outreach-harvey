@@ -56,6 +56,13 @@ class CravenProfileCollector(ProfileCollector):
         super().__init__(state, confirmed, timeout)
         self._home_cache: dict[str, tuple[str, str]] = {}
 
+    async def _improve_name(self, company: dict, domain: str):
+        # Upstream renames a company after its site's title when the domain
+        # doesn't back the name up. Our names come from the owned venue data
+        # and a venue's site is often a booking or ordering platform, so the
+        # rename is wrong here ("The White Lion" became "Sessions Serve").
+        return None
+
     async def _resolve_site(self, domain: str) -> tuple[str, str]:
         # Memoised so our extra detectors reuse the homepage upstream fetched.
         if domain not in self._home_cache:
