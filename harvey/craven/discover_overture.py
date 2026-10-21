@@ -36,11 +36,11 @@ POI_COLUMNS = "id,name,category,confidence,lat,lng,address,postcode,locality,pho
 
 # ICP term -> Overture category patterns (PostgREST `like` uses * as wildcard).
 TERM_TO_CATEGORY: dict[str, list[str]] = {
-    "pub": ["pub", "gastropub", "brewery"],
-    "bar": ["bar", "cocktail_bar", "wine_bar", "beer_bar", "bar_and_grill_restaurant"],
+    "pub": ["pub", "gastropub", "brewery", "irish_pub", "social_club", "inn"],
+    "bar": ["bar", "cocktail_bar", "wine_bar", "beer_bar", "sports_bar", "tapas_bar", "lounge", "nightclub"],
     "cafe": ["cafe", "coffee_shop", "tea_room"],
     "restaurant": ["restaurant", "*_restaurant"],
-    "hotel": ["hotel", "bed_and_breakfast", "guest_house", "inn", "hostel"],
+    "hotel": ["hotel", "bed_and_breakfast", "guest_house", "hostel"],
     "fast_food": ["fast_food_restaurant", "fish_and_chips_restaurant", "takeout_restaurant", "chicken_restaurant"],
     "butcher": ["butcher_shop", "butcher"],
     "farm_shop": ["farm_shop", "farmers_market"],
@@ -185,9 +185,16 @@ class OvertureSupabase(DiscoveryProvider):
             independent = 1.0
             if kind == "social":
                 website = ""
-            if domain and await self._domain_count(domain, outcode) > self.chain_domain_threshold:
-                independent = 0.0
-                domain = ""  # keep the venue distinct; Harvey keys companies by domain
+            if domain:
+                shared = await self._domain_count(domain, outcode)
+                if shared > self.chain_domain_threshold:
+                    independent = 0.0  # a chain: bought centrally, excluded by cohort
+                if shared > 1:
+                    # Harvey keys companies by domain, so two venues on one site
+                    # would collapse into one company. Keep every venue distinct
+                    # (identity by external id) whether it is a chain or a
+                    # two-site family business.
+                    domain = ""
             address = ", ".join(x for x in (r.get("address"), r.get("locality"), r.get("postcode")) if x)
             observations = [
                 {"signal_code": "VENUE_CATEGORY", "value_text": r.get("category") or ""},

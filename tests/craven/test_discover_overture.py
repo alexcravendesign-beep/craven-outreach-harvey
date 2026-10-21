@@ -30,11 +30,13 @@ POIS = [
     _poi(7, "Old Customer Cafe", "cafe", website="https://oldcustomer.co.uk", email="info@oldcustomer.co.uk"),
     _poi(8, "Gower Thai", "thai_restaurant", website="https://gowerthai.co.uk", email="bookings@gowerthai.co.uk"),
     _poi(9, "Not Swansea", "pub", postcode="BD23 1AA", website="https://elsewhere.pub", email="info@elsewhere.pub"),
+    _poi(10, "Joe's Bar Uplands", "bar", website="https://joesbars.co.uk", email="info@joesbars.co.uk"),
+    _poi(11, "Joe's Bar Marina", "bar", website="https://joesbars.co.uk"),
 ]
 
 
 def test_terms_map_to_overture_category_patterns():
-    assert categories_for("pub") == ["pub", "gastropub", "brewery"]
+    assert categories_for("pub")[:3] == ["pub", "gastropub", "brewery"] and "irish_pub" in categories_for("pub")
     assert "*_restaurant" in categories_for("restaurant")
     assert categories_for("Coffee Shop") == ["coffee_shop"]
     assert categories_for("") == []
@@ -74,6 +76,10 @@ async def test_fetch_shapes_venues_honestly(state):
     assert all(c.domain == "" and c.website.startswith("https://www.costa") for c in costa)
     assert all(next(o["value_num"] for o in c.observations if o["signal_code"] == "INDEPENDENT_VENUE") == 0.0 for c in costa)
     assert {c.external_id for c in costa} == {"overture:4", "overture:5", "overture:6"}
+    bars = {b.name: b for b in await provider.fetch(None, {}, DiscoveryQuery(term="bar", location="SA1"))}
+    two_site = [bars["Joe's Bar Uplands"], bars["Joe's Bar Marina"]]
+    assert all(b.domain == "" and b.website == "https://joesbars.co.uk" for b in two_site)   # distinct companies
+    assert all(next(o["value_num"] for o in b.observations if o["signal_code"] == "INDEPENDENT_VENUE") == 1.0 for b in two_site)
 
 
 @pytest.mark.asyncio
