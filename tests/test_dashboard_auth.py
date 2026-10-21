@@ -979,19 +979,19 @@ def test_bind_stays_loopback_whatever_extra_hosts_say(extra_host, monkeypatch):
         dash.start_dashboard(host="nicks-mac-mini.tailbdd36b.ts.net")
 
 
-# ── The map's one external host, and the vendored map library ──
+# ── No external host at all, and the vendored map library ──
 
 
-def test_csp_allows_only_basemap_tiles_beyond_self(anon):
+def test_csp_loads_from_self_only(anon):
     csp = anon.get("/").headers["content-security-policy"]
     directives = {d.split()[0]: d.split()[1:] for d in csp.split(";") if d.strip()}
-    assert directives["img-src"] == ["'self'", "data:", "https://tile.openstreetmap.org"]
+    assert directives["img-src"] == ["'self'", "data:"]
     assert directives["script-src"] == ["'self'", "'unsafe-inline'"]
     assert directives["connect-src"] == ["'self'"]
     assert directives["style-src"] == ["'self'", "'unsafe-inline'"]
     assert directives["font-src"] == ["'self'"]
     assert directives["default-src"] == ["'self'"]
-    assert auth.TILE_HOSTS == "https://tile.openstreetmap.org"
+    assert "openstreetmap" not in csp
 
 
 def test_leaflet_is_vendored_and_served_from_self(anon, env):
@@ -1012,5 +1012,5 @@ def test_leaflet_is_vendored_and_served_from_self(anon, env):
     assert 'src="/static/vendor/leaflet/leaflet.js"' in html and 'href="/static/vendor/leaflet/leaflet.css"' in html
     assert "unpkg.com" not in html and "cdn" not in html.lower()
     app_js = (WEB / "app.js").read_text(encoding="utf-8")
-    assert "https://tile.openstreetmap.org/" in app_js and "crossOrigin: 'anonymous'" in app_js
+    assert "L.tileLayer('/tiles/{z}/{x}/{y}.png'" in app_js and "openstreetmap.org/" not in app_js.replace("openstreetmap.org/copyright", "")
     assert "cartocdn" not in app_js

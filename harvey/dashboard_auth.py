@@ -58,12 +58,6 @@ TOKEN_RE = re.compile(r"[A-Za-z0-9_-]{43,128}")
 _PORT_RE = re.compile(r":[0-9]{1,5}")
 _IS_WINDOWS = os.name == "nt"
 
-# The one external host the dashboard page may load from: OpenStreetMap's
-# standard tiles for the Map tab (https://operations.osmfoundation.org/policies/tiles/:
-# light use with attribution, no key). Dark mode darkens them with a CSS
-# filter rather than fetching a second tile set.
-TILE_HOSTS = "https://tile.openstreetmap.org"
-
 SECURITY_HEADERS = [
     (b"cache-control", b"no-store"),
     (b"referrer-policy", b"no-referrer"),
@@ -73,13 +67,12 @@ SECURITY_HEADERS = [
     (b"cross-origin-resource-policy", b"same-origin"),
     # Inline handlers/styles are how the existing UI is written, so
     # 'unsafe-inline' stays; connect-src 'self' still keeps fetches local.
-    # img-src also allows the map's basemap tiles (TILE_HOSTS): images only,
-    # fetched by the browser with no credentials and no dashboard data in the
-    # URL beyond the tile coordinates being looked at. Scripts stay 'self'
-    # (Leaflet is vendored under web/vendor/).
+    # The map's basemap tiles come through the dashboard itself (/tiles/,
+    # harvey.tiles), so img-src stays 'self' and the page loads from no
+    # external host at all. Scripts stay 'self' (Leaflet is vendored).
     (b"content-security-policy",
      b"default-src 'self'; script-src 'self' 'unsafe-inline'; "
-     b"style-src 'self' 'unsafe-inline'; img-src 'self' data: " + TILE_HOSTS.encode() + b"; "
+     b"style-src 'self' 'unsafe-inline'; img-src 'self' data:; "
      b"font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; "
      b"form-action 'none'; frame-ancestors 'none'"),
 ]
@@ -313,10 +306,17 @@ def is_loopback(host: str) -> bool:
         return False
 
 
+# Map tiles the dashboard proxies (harvey.tiles): images cannot carry the
+# token, so the path is public; it is strictly z/x/y digits and nothing else.
+_TILE_PATH = re.compile(r"/tiles/\d{1,2}/\d{1,7}/\d{1,7}\.png")
+
+
 def is_public_path(method: str, path: str) -> bool:
     if method not in ("GET", "HEAD"):
         return False
     if path == "/":
+        return True
+    if _TILE_PATH.fullmatch(path):
         return True
     if not path.startswith("/static/"):
         return False

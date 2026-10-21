@@ -1757,16 +1757,18 @@ function mapDark() {
   return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
 }
 
-// OpenStreetMap's standard tiles: the one external host the page loads from
-// (img-src in the CSP). Dark mode darkens the same tiles with a CSS filter
-// (see .map-canvas.dark in app.css), so there is one tile set and no key.
+// OpenStreetMap's standard tiles, served by the dashboard itself (/tiles/,
+// harvey.tiles: fetched once with an identifying User-Agent, cached on disk),
+// so the page loads from no external host and the map works on every device.
+// Dark mode darkens the same tiles with a CSS filter (see .map-canvas.dark
+// in app.css), so there is one tile set and no key.
 function mapRetile() {
   if (!_map || typeof L === 'undefined') return;
   const canvas = document.getElementById('map-canvas');
   if (canvas) canvas.classList.toggle('dark', mapDark());
   if (_mapTiles) return;
-  _mapTiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19, crossOrigin: 'anonymous',
+  _mapTiles = L.tileLayer('/tiles/{z}/{x}/{y}.png', {
+    maxZoom: 19,
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors',
   });
   _mapTiles.addTo(_map);

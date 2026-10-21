@@ -2231,6 +2231,26 @@ TEXT_TYPES = {".css": "text/css", ".js": "text/javascript", ".svg": "image/svg+x
 BINARY_TYPES = {".woff2": "font/woff2", ".woff": "font/woff", ".png": "image/png"}
 
 
+
+TILE_CACHE_DIR = PROJECT_ROOT / "data" / "tiles"
+
+
+@app.get("/tiles/{z}/{x}/{y}.png")
+async def map_tile(z: int, x: int, y: int):
+    """A basemap tile for the Map tab, fetched once from OpenStreetMap by the
+    dashboard (identified as this app) and cached on disk. Public like
+    /static/ because the browser loads it as an image, which cannot carry
+    the token; it serves nothing but map imagery and only for valid z/x/y."""
+    from harvey import tiles
+    if not tiles.valid(z, x, y):
+        return PlainTextResponse("not found", status_code=404)
+    try:
+        data = await tiles.get_tile(TILE_CACHE_DIR, z, x, y)
+    except Exception as e:  # upstream refused or unreachable: an empty tile, not a 500 page
+        logger.warning(f"tile {z}/{x}/{y}: {e}")
+        return PlainTextResponse("tile unavailable", status_code=502, headers={"Cache-Control": "no-store"})
+    return Response(data, media_type="image/png", headers={"Cache-Control": "public, max-age=86400"})
+
 @app.get("/static/{path:path}")
 async def static_file(path: str):
     """Serve the dashboard's own assets from disk.
