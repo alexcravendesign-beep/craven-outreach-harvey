@@ -70,7 +70,10 @@ def deliver(stage: Path, target: str, ssh_opts: tuple[str, ...] = ("-o", "BatchM
     where ``target`` is ``user@host:path`` of the collector's project root."""
     host, _, root = target.partition(":")
     inbox = f"{root.rstrip('/')}/{INBOX_REL.as_posix()}"
-    subprocess.run(["ssh", *ssh_opts, host, f"mkdir -p '{inbox}'"], check=True)
+    # Unquoted on purpose: the path is our own config and may start with ~,
+    # which the remote shell only expands outside quotes (quoted, it made a
+    # literal "~" directory and the scp that followed failed).
+    subprocess.run(["ssh", *ssh_opts, host, f"mkdir -p {inbox}"], check=True)
     files = sorted(p for p in stage.iterdir() if p.is_file())
     subprocess.run(["scp", *ssh_opts, "-q", *map(str, files), f"{host}:{inbox}/"], check=True)
     logger.info(f"swansea feed: delivered {len(files)} files to {host}:{inbox}")

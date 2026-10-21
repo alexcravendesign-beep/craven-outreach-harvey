@@ -58,6 +58,6 @@ def test_deliver_scps_into_the_project_inbox(tmp_path, monkeypatch):
     ran = []
     monkeypatch.setattr(F.subprocess, "run", lambda cmd, check: ran.append(cmd))
     deliver(stage, "nick@mini:~/Projects/craven-outreach/app", ssh_opts=())
-    assert ran[0] == ["ssh", "nick@mini", "mkdir -p '~/Projects/craven-outreach/app/data/licensing/swansea/inbox'"]
+    assert ran[0] == ["ssh", "nick@mini", "mkdir -p ~/Projects/craven-outreach/app/data/licensing/swansea/inbox"]
     assert ran[1][:2] == ["scp", "-q"] and ran[1][-1] == "nick@mini:~/Projects/craven-outreach/app/data/licensing/swansea/inbox/"
     assert [Path(p).name for p in ran[1][2:-1]] == ["a.docx", "index.html"]
