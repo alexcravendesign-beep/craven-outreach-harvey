@@ -3,6 +3,7 @@ let companyDrill = false;      // true while viewing a single company's contacts
 let _companies = [], _prospects = [], _campaigns = [];
 let _signals = null;           // last /api/signals payload, for the cohort builder
 let _desk = { items: [], i: 0 };
+let _map = null, _mapTiles = null, _mapPins = null;   // the Map tab's Leaflet objects
 
 // ── Appearance ──
 //
@@ -18,6 +19,7 @@ function applyTheme(mode) {
   else root.setAttribute('data-theme', mode);
   const btn = document.getElementById('theme-btn');
   if (btn) btn.textContent = mode;
+  if (typeof mapRetile === 'function') mapRetile();
 }
 
 function cycleTheme() {
@@ -253,6 +255,7 @@ function loadCurrentTab() {
     case 'signals': loadSignals(); break;
     case 'discover': loadDiscoverProviders(); break;
     case 'companies': if (!companyDrill) loadCompanies(); break;
+    case 'map': loadMap(); break;
     case 'prospects': loadProspects(); break;
     case 'campaigns': loadCampaigns(); break;
     case 'outbox': loadOutbox(); break;
@@ -790,6 +793,7 @@ async function runCohort() {
   if (generation !== _cohortGeneration) return;
   if (!data) { el.innerHTML = ''; return; }
 
+  const draftN = 20;  // the same number draftBatch() asks for (DRAFT_BATCH)
   let html = '<div style="border-top:1px solid var(--border);margin-top:20px;padding-top:20px">' +
     '<div class="cohort-size">' + data.size + '</div>' +
     '<div class="muted" style="font-size:13px;margin-top:2px">compan' +
@@ -816,6 +820,9 @@ async function runCohort() {
       '<button class="btn btn-secondary btn-sm" onclick="pageCohort(1)"' +
         (hasNext ? '' : ' disabled') + '>Next</button>' +
       '<button class="btn btn-secondary btn-sm" onclick="exportCohort(this)">Export CSV</button>' +
+      '<button class="btn btn-primary btn-sm" onclick="draftBatch(this)" ' +
+        'title="Write up to ' + draftN + ' grounded first emails for cohort venues with a mailbox. ' +
+        'They land in the Outbox for review; nothing sends.">Draft ' + draftN + '</button>' +
       '</div>';
   } else if (data.size === 0) {
     html += '<p class="muted" style="font-size:13px;margin-top:12px">' +
@@ -860,6 +867,42 @@ async function exportCohort(button) {
 function pageCohort(dir) {
   _cohortOffset = Math.max(0, _cohortOffset + dir * COHORT_PAGE);
   runCohort();
+}
+
+const DRAFT_BATCH = 20;
+
+// Up to DRAFT_BATCH first emails for this cohort, staged in the Outbox as
+// waiting on you. The server refuses (with the reason) when the model can't
+// be used, so a batch never half-happens silently.
+async function draftBatch(button) {
+  const require = [..._cohort.require], exclude = [..._cohort.exclude];
+  if (!require.length) return;
+  button.disabled = true;
+  const label = button.textContent;
+  button.textContent = 'Drafting…';
+  let data = null;
+  try {
+    const r = await authFetch('/api/craven/draft-batch', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({require: require, exclude: exclude, limit: DRAFT_BATCH}),
+    });
+    if (await lockIfRefused(r)) return;
+    data = await r.json();
+  } catch {} finally {
+    button.disabled = false;
+    button.textContent = label;
+  }
+  if (!data || !data.success) {
+    showToast((data && data.message) || 'Drafting failed.', 'error');
+    return;
+  }
+  const n = (data.drafted || []).length;
+  const skipped = (data.skipped_no_prospect || 0) + (data.skipped_already_drafted || 0);
+  showToast('Drafted ' + n + ' email' + (n === 1 ? '' : 's') +
+    (skipped ? ' (' + skipped + ' skipped: no mailbox or already drafted)' : '') +
+    ((data.failed || []).length ? '; ' + data.failed.length + ' gave nothing' : '') +
+    '. Waiting in the Outbox.', n ? 'success' : 'error');
+  if (n) goTab('outbox');
 }
 
 // ── Settings ──
@@ -1341,8 +1384,10 @@ function renderDeskContext(ctx) {
     .filter(Boolean).map(escHtml).join(' &middot; ');
   const signals = Object.entries(ctx.signals || {})
     .map(([k, v]) => escHtml(k) + ': <b>' + escHtml(v) + '</b>').join('<br>');
+  const venue = ctx.company_id
+    ? ' <a href="#venue" onclick="event.preventDefault();deskVenue()">venue page &rarr;</a>' : '';
   return '<div class="desk-context">' +
-    row('Company', escHtml(ctx.company)) +
+    row('Company', escHtml(ctx.company) + venue) +
     row('Website', site) +
     row('About', escHtml(ctx.description)) +
     row('Contact', who) +
@@ -1484,10 +1529,28 @@ document.addEventListener('keydown', e => {
 
 async function outboxAct(id, action) {
   if (deskBusy()) return;
-  const data = await api('/api/outbox/' + encodeURIComponent(id) + '/' + action, {method: 'POST'});
-  if (data && data.success) showToast(action === 'approve' ? 'Approved — will send on schedule.' : 'Rejected.', 'success');
-  else showToast('Action failed.', 'error');
+  const opts = {method: 'POST'};
+  if (action === 'reject') {
+    // The reason is kept as feedback on the draft, so what keeps getting
+    // rejected (and why) can be read back and tuned. Cancel keeps the draft.
+    const reason = prompt('Why reject this draft? Optional; kept as feedback for tuning the writer.');
+    if (reason === null) return;
+    if (reason.trim()) {
+      opts.headers = {'Content-Type': 'application/json'};
+      opts.body = JSON.stringify({reason: reason.trim()});
+    }
+  }
+  const data = await api('/api/outbox/' + encodeURIComponent(id) + '/' + action, opts);
+  if (data && data.success) {
+    showToast(action === 'approve' ? 'Approved — will send on schedule.'
+      : (data.feedback_id ? 'Rejected; reason kept.' : 'Rejected.'), 'success');
+  } else showToast('Action failed.', 'error');
   loadOutbox();
+}
+
+function deskVenue() {
+  const cur = _desk.items[_desk.i];
+  if (cur && cur.context && cur.context.company_id) showVenue(cur.context.company_id);
 }
 
 async function outboxApproveAll() {
@@ -1522,7 +1585,7 @@ async function loadCompanies() {
     const nameLink = safeHref(website)
       ? '<a href="' + safeHref(website) + '" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">' + escHtml(c.name) + '</a>'
       : escHtml(c.name);
-    html += '<tr style="cursor:pointer" onclick="showCompanyContacts(' + i + ')">' +
+    html += '<tr style="cursor:pointer" onclick="showVenueAt(' + i + ')">' +
       '<td>' + nameLink + '</td><td class="muted">' + escHtml(c.domain) + '</td><td>' + escHtml(c.industry) + '</td>' +
       '<td>' + escHtml(c.company_size) + '</td><td>' + escHtml(c.location) + '</td>' +
       '<td>' + (c.contact_count || 0) + '</td><td class="muted">' + escHtml(c.source) + '</td>' +
@@ -1555,6 +1618,224 @@ async function showCompanyContacts(index) {
     html += '</tbody></table></div></div>';
   }
   el.innerHTML = html;
+}
+
+// ── Venue page: one company as the reviewer sees it ──
+
+function showVenueAt(index) {
+  const company = _companies[index];
+  if (company) showVenue(company.id);
+}
+
+// Reachable from the Companies list, the Outbox desk and the map, so it
+// switches to the Companies tab itself.
+async function showVenue(companyId) {
+  if (currentTab !== 'companies') {
+    const btn = [...document.querySelectorAll('nav button')]
+      .find(b => (b.getAttribute('onclick') || '').includes("'companies'"));
+    showTab('companies', btn);
+  }
+  companyDrill = true;
+  const el = document.getElementById('companies-list');
+  el.innerHTML = '<p class="muted">Loading venue…</p>';
+  const data = await api('/api/companies/' + encodeURIComponent(companyId));
+  if (!data || !data.company) { el.innerHTML = offlineState(); return; }
+  el.innerHTML = renderVenue(data);
+}
+
+function venueFacts(doc) {
+  if (!doc || typeof doc !== 'object') return '';
+  const titles = {what_they_sell: 'What they sell', service_style: 'Service style', equipment: 'Equipment implied',
+                  proud_of: 'Proud of', hook: 'Possible opening', seasonal_note: 'Seasonal note'};
+  const keys = Object.keys(titles).filter(k => k in doc)
+    .concat(Object.keys(doc).filter(k => !(k in titles)));
+  const cell = v => {
+    if (Array.isArray(v)) return v.map(x => (x && typeof x === 'object')
+      ? Object.values(x).map(y => escHtml(String(y))).join(' &mdash; ') : escHtml(String(x))).join('<br>');
+    if (v && typeof v === 'object') return Object.entries(v).map(([k, y]) => escHtml(k) + ': ' + escHtml(String(y))).join('<br>');
+    return escHtml(String(v));
+  };
+  const rows = keys.filter(k => doc[k] !== '' && doc[k] !== null && doc[k] !== undefined &&
+                                !(Array.isArray(doc[k]) && !doc[k].length))
+    .map(k => '<div class="k">' + escHtml(titles[k] || k.replace(/_/g, ' ')) + '</div><div class="v">' + cell(doc[k]) + '</div>');
+  return rows.length ? '<div class="venue-facts">' + rows.join('') + '</div>' : '';
+}
+
+function renderVenue(data) {
+  const c = data.company;
+  const website = c.website || (c.domain ? 'https://' + c.domain : '');
+  const site = safeHref(website)
+    ? '<a href="' + safeHref(website) + '" target="_blank" rel="noopener noreferrer">' +
+        escHtml(website.replace(/^https?:\/\//i, '')) + ' &#8599;</a>' : '';
+  const meta = [c.industry, c.location, site, c.external_id].filter(Boolean).join(' &middot; ');
+
+  let signals = '';
+  if (data.signals && data.signals.length) {
+    signals = '<div class="table-card"><table class="sig-table"><thead><tr>' +
+      '<th>Signal</th><th>Value</th><th>Confidence</th><th>Evidence</th><th>Seen</th></tr></thead><tbody>';
+    for (const s of data.signals) {
+      const ev = safeHref(s.evidence_url)
+        ? '<a href="' + safeHref(s.evidence_url) + '" target="_blank" rel="noopener noreferrer">' +
+            escHtml(s.evidence_url.replace(/^https?:\/\//i, '').slice(0, 48)) + ' &#8599;</a>' : '';
+      signals += '<tr><td>' + escHtml(s.label) +
+        (s.lead ? '<span class="lead-tag">lead</span>' : '') +
+        (s.reviewer_only ? '<span class="reviewer-only">reviewer only</span>' : '') +
+        '<div class="muted" style="font-family:var(--mono);font-size:10.5px">' + escHtml(s.code) +
+          (s.collector ? ' &middot; ' + escHtml(s.collector) : '') + '</div></td>' +
+        '<td class="sig-val">' + escHtml(s.value) + '</td>' +
+        '<td class="num">' + (s.confidence === null || s.confidence === undefined ? '' : Number(s.confidence).toFixed(2)) + '</td>' +
+        '<td class="sig-ev">' + ev + '</td><td class="muted">' + formatDate(s.observed_at) + '</td></tr>';
+    }
+    signals += '</tbody></table></div>';
+    if (data.reviewer_only_note) {
+      signals += '<p class="muted" style="font-size:12px;margin-top:8px">' +
+        '<span class="reviewer-only" style="margin-left:0">reviewer only</span> ' +
+        escHtml(data.reviewer_only_note) + '</p>';
+    }
+  } else {
+    signals = '<p class="muted" style="font-size:13px">No signals collected for this venue yet.</p>';
+  }
+
+  const facts = venueFacts(data.dossier);
+  const dossier = facts
+    ? '<div class="subhead">From their website</div>' + facts +
+      '<p class="muted" style="font-size:12px;margin-top:8px">Read by the model from their own site; the writer may use these as facts.</p>'
+    : '';
+
+  let mailbox = '';
+  if (data.prospects && data.prospects.length) {
+    mailbox = data.prospects.map(p =>
+      '<div style="margin-bottom:8px"><span style="font-family:var(--mono);font-size:12px">' +
+        escHtml(p.email || '(no address)') + '</span>' + (p.email ? emailTag(p) : '') + ' ' + badge(p.status) +
+        '<div class="muted" style="font-size:12px">' + escHtml(p.title || '') +
+          (p.source ? ' &middot; ' + escHtml(CONTACT_SOURCES[p.source] || p.source) : '') + '</div></div>').join('');
+  } else {
+    mailbox = '<p class="muted" style="font-size:13px">No mailbox found yet, so nothing can be drafted.</p>';
+  }
+
+  let drafts = '';
+  if (data.drafts && data.drafts.length) {
+    drafts = data.drafts.map(d =>
+      '<div class="venue-draft">' + badge(d.status) +
+        ' <span class="muted" style="font-size:12px">step ' + d.step + ' &middot; ' + formatDate(d.created_at) + '</span>' +
+        '<div class="subject">' + escHtml(d.subject || '(no subject)') + '</div>' +
+        '<details><summary class="muted" style="font-size:12px;cursor:pointer">Read</summary>' +
+          '<div class="body">' + escHtml(d.body) + '</div></details></div>').join('');
+  } else {
+    drafts = '<p class="muted" style="font-size:13px">Nothing written to this venue yet.</p>';
+  }
+
+  return '<div class="card">' +
+    '<div class="venue-head"><div><h2>' + escHtml(c.name) + '</h2><div class="meta">' + meta + '</div></div>' +
+      '<button class="btn btn-secondary btn-sm" onclick="loadCompanies()">&larr; Companies</button></div>' +
+    '<div class="venue-grid"><div>' +
+      '<div class="subhead" style="margin-top:0">Signals' +
+        (data.lead ? ' <span class="muted" style="font-weight:400;text-transform:none;letter-spacing:0">&mdash; lead: ' +
+          escHtml((data.signals.find(s => s.lead) || {}).label || data.lead) + '</span>' : '') + '</div>' +
+      signals + dossier +
+    '</div><aside>' +
+      '<div class="subhead" style="margin-top:0">Mailbox</div>' + mailbox +
+      '<div class="subhead">Drafts</div>' + drafts +
+    '</aside></div></div>';
+}
+
+// ── Map: where the venues are ──
+
+const REACH = {
+  emailable: ['Emailable', 'good', '--s-good'],
+  mailbox:   ['Mailbox found, unverified', 'waiting', '--s-wait'],
+  none:      ['No mailbox yet', 'idle', '--text-3'],
+};
+
+function tone(varName) {
+  return getComputedStyle(document.documentElement).getPropertyValue(varName).trim() || '#888';
+}
+
+function mapDark() {
+  const t = document.documentElement.getAttribute('data-theme');
+  if (t) return t === 'dark';
+  return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+}
+
+// OpenStreetMap's standard tiles: the one external host the page loads from
+// (img-src in the CSP). Dark mode darkens the same tiles with a CSS filter
+// (see .map-canvas.dark in app.css), so there is one tile set and no key.
+function mapRetile() {
+  if (!_map || typeof L === 'undefined') return;
+  const canvas = document.getElementById('map-canvas');
+  if (canvas) canvas.classList.toggle('dark', mapDark());
+  if (_mapTiles) return;
+  _mapTiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19, crossOrigin: 'anonymous',
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors',
+  });
+  _mapTiles.addTo(_map);
+}
+
+async function loadMap() {
+  const canvas = document.getElementById('map-canvas');
+  const note = document.getElementById('map-note');
+  const legend = document.getElementById('map-legend');
+  const figures = document.getElementById('map-figures');
+  const data = await api('/api/map');
+  if (!data) { note.innerHTML = offlineState(); return; }
+  if (!data.available) {
+    canvas.style.display = 'none';
+    note.innerHTML = emptyState('&#9673;', 'No map', escHtml(data.message || ''));
+    return;
+  }
+  canvas.style.display = '';
+  if (typeof L === 'undefined') {
+    note.innerHTML = emptyState('&#9888;', 'Map library missing',
+      'Leaflet should be served from <b>/static/vendor/leaflet/</b>.');
+    return;
+  }
+  if (!_map) {
+    _map = L.map(canvas, {preferCanvas: true, zoomControl: true}).setView([51.62, -3.94], 10);
+  }
+  mapRetile();
+  if (_mapPins) _map.removeLayer(_mapPins);
+  _mapPins = L.layerGroup();
+  const counts = {emailable: 0, mailbox: 0, none: 0};
+  const bounds = [];
+  for (const pin of data.pins || []) {
+    const r = REACH[pin.reachability] || REACH.none;
+    counts[pin.reachability in counts ? pin.reachability : 'none']++;
+    const colour = tone(r[2]);
+    const m = L.circleMarker([pin.lat, pin.lng], {
+      radius: pin.reachability === 'none' ? 4 : 6, color: colour, fillColor: colour,
+      fillOpacity: 0.85, weight: 1, opacity: 0.9,
+    });
+    // Built as DOM, never as an HTML string: names and ids come from data.
+    const box = document.createElement('div');
+    const title = document.createElement('b'); title.textContent = pin.name || '(unnamed)';
+    const sub = document.createElement('div'); sub.className = 'muted';
+    sub.textContent = [pin.industry, pin.location || pin.postcode].filter(Boolean).join(' · ');
+    const reach = document.createElement('div');
+    reach.innerHTML = '<span class="badge t-' + r[1] + '">' + escHtml(r[0]) + '</span>' +
+      (pin.lead ? ' <span class="lead-tag" style="margin-left:4px">lead: ' + escHtml(pin.lead) + '</span>' : '');
+    const open = document.createElement('a'); open.href = '#venue'; open.textContent = 'Open venue page →';
+    open.style.display = 'inline-block'; open.style.marginTop = '8px';
+    open.onclick = e => { e.preventDefault(); showVenue(pin.id); };
+    box.append(title, sub, reach, open);
+    m.bindPopup(box);
+    m.addTo(_mapPins);
+    bounds.push([pin.lat, pin.lng]);
+  }
+  _mapPins.addTo(_map);
+  // The section was display:none until this tab opened.
+  setTimeout(() => { _map.invalidateSize(); if (bounds.length) _map.fitBounds(bounds, {padding: [24, 24], maxZoom: 14}); }, 0);
+
+  legend.innerHTML = Object.entries(REACH).map(([k, r]) =>
+    '<span><span class="dot" style="background:' + tone(r[2]) + '"></span>' + r[0] +
+      ' <span class="muted" style="font-family:var(--mono)">' + counts[k] + '</span></span>').join('');
+  const f = data.figures || {};
+  const fig = (n, k) => '<div><div class="n">' + n + '</div><div class="k">' + k + '</div></div>';
+  figures.innerHTML = fig((data.pins || []).length, 'venues placed') +
+    ('suppressed_customers' in f ? fig(f.suppressed_customers, 'existing customers &mdash; suppressed, never mapped') : '');
+  note.innerHTML = (data.pins || []).length ? '' :
+    '<p class="muted" style="font-size:13px;margin-top:10px">No venue has coordinates yet. Run ' +
+    '<b>harvey-craven sync-geo</b> to copy them from the owned data.</p>';
 }
 
 async function submitFeedback(entityType, entityId, promptText) {

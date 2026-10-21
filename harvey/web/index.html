@@ -7,6 +7,7 @@
 <title>Harvey — Command Deck</title>
 <!-- First, so the token leaves the address bar before anything else runs. -->
 <script src="/static/auth.js"></script>
+<link rel="stylesheet" href="/static/vendor/leaflet/leaflet.css">
 <link rel="stylesheet" href="/static/app.css">
 </head>
 <body>
@@ -55,6 +56,7 @@
   <button onclick="showTab('signals', this)">Signals<span class="nav-count" id="nav-signals"></span></button>
   <button onclick="showTab('discover', this)">Discover</button>
   <button onclick="showTab('companies', this)">Companies</button>
+  <button onclick="showTab('map', this)">Map</button>
   <button onclick="showTab('prospects', this)">Contacts</button>
   <button onclick="showTab('campaigns', this)">Campaigns</button>
   <button onclick="showTab('outbox', this)">Outbox<span class="nav-count" id="nav-outbox"></span></button>
@@ -161,8 +163,19 @@
 
 <!-- Companies -->
 <div id="companies" class="section">
-  <div class="section-head"><h2>Companies</h2><p>Organizations Harvey has researched. Click a row to see its contacts.</p></div>
+  <div class="section-head"><h2>Companies</h2><p>Organizations Harvey has researched. Click a row to open its venue page: every signal with its evidence, the mailbox, and any drafts.</p></div>
   <div id="companies-list"></div>
+</div>
+
+<!-- Map: where the venues are -->
+<div id="map" class="section">
+  <div class="section-head" style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px">
+    <div><h2>Map</h2><p>Every placed venue, coloured by how reachable it is. Click a pin to open its venue page.</p></div>
+    <div id="map-figures" class="map-figures"></div>
+  </div>
+  <div id="map-legend" class="map-legend"></div>
+  <div id="map-canvas" class="map-canvas"></div>
+  <div id="map-note"></div>
 </div>
 
 <!-- Contacts -->
@@ -439,6 +452,7 @@
 
 </main>
 
+<script src="/static/vendor/leaflet/leaflet.js"></script>
 <script src="/static/app.js"></script>
 </body>
 </html>

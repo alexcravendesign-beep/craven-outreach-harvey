@@ -6,11 +6,15 @@ still *send*), and any DNS name pointed at 127.0.0.1 can reach the port. So
 every request passes, in order:
 
 1. Host: one Host header naming a loopback address (``localhost``,
-   127.0.0.0/8, ``[::1]``) with an optional port. Anything else, including a
+   127.0.0.0/8, ``[::1]``) with an optional port, or one of the
+   ``dashboard.extra_hosts`` the operator configured for a TLS front on a
+   trusted private network (Tailscale Serve). Anything else, including a
    rebinding name that resolves to 127.0.0.1, is refused before the token is
    looked at.
 2. Browser provenance: a request carrying ``Origin`` must come from exactly
-   this origin, and ``Sec-Fetch-Site`` must be ``same-origin`` or ``none``.
+   this origin (``http://`` for a loopback Host, ``https://`` for an extra
+   host, since the front terminates TLS), and ``Sec-Fetch-Site`` must be
+   ``same-origin`` or ``none``.
    (A top-level navigation to ``/`` is the one exception: the shell carries
    no data.) No CORS headers are ever sent, so preflights fail.
 3. Public shell: only ``GET``/``HEAD`` of ``/`` and ``/static/*`` (HTML, CSS,
@@ -54,6 +58,12 @@ TOKEN_RE = re.compile(r"[A-Za-z0-9_-]{43,128}")
 _PORT_RE = re.compile(r":[0-9]{1,5}")
 _IS_WINDOWS = os.name == "nt"
 
+# The one external host the dashboard page may load from: OpenStreetMap's
+# standard tiles for the Map tab (https://operations.osmfoundation.org/policies/tiles/:
+# light use with attribution, no key). Dark mode darkens them with a CSS
+# filter rather than fetching a second tile set.
+TILE_HOSTS = "https://tile.openstreetmap.org"
+
 SECURITY_HEADERS = [
     (b"cache-control", b"no-store"),
     (b"referrer-policy", b"no-referrer"),
@@ -63,10 +73,14 @@ SECURITY_HEADERS = [
     (b"cross-origin-resource-policy", b"same-origin"),
     # Inline handlers/styles are how the existing UI is written, so
     # 'unsafe-inline' stays; connect-src 'self' still keeps fetches local.
+    # img-src also allows the map's basemap tiles (TILE_HOSTS): images only,
+    # fetched by the browser with no credentials and no dashboard data in the
+    # URL beyond the tile coordinates being looked at. Scripts stay 'self'
+    # (Leaflet is vendored under web/vendor/).
     (b"content-security-policy",
      b"default-src 'self'; script-src 'self' 'unsafe-inline'; "
-     b"style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; "
-     b"connect-src 'self'; object-src 'none'; base-uri 'none'; "
+     b"style-src 'self' 'unsafe-inline'; img-src 'self' data: " + TILE_HOSTS.encode() + b"; "
+     b"font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; "
      b"form-action 'none'; frame-ancestors 'none'"),
 ]
 
@@ -236,6 +250,31 @@ class TokenStore:
             return self._token
 
 
+class HostAllowance:
+    """The extra hosts this process answers to (``dashboard.extra_hosts``),
+    each ``host`` or ``host:port`` in lower case. Empty by default."""
+
+    def __init__(self, hosts=()):
+        self._lock = threading.Lock()
+        self.configure(hosts)
+
+    def configure(self, hosts):
+        cleaned = []
+        for raw in hosts or ():
+            value = str(raw or "").strip().lower()
+            name = parse_host(value)
+            if name is None or is_loopback(name):
+                raise ValueError(f"extra host {raw!r} must be a non-loopback host[:port]")
+            if value not in cleaned:
+                cleaned.append(value)
+        with self._lock:
+            self._hosts = tuple(cleaned)
+
+    def get(self) -> tuple[str, ...]:
+        with self._lock:
+            return self._hosts
+
+
 # ── Request checks ──
 
 
@@ -303,9 +342,10 @@ class DashboardGuard:
     """ASGI middleware applying the checks in the module docstring to every
     request, and the security headers to every response."""
 
-    def __init__(self, app, store: TokenStore):
+    def __init__(self, app, store: TokenStore, hosts: HostAllowance | None = None):
         self.app = app
         self.store = store
+        self.hosts = hosts or HostAllowance()
 
     async def __call__(self, scope, receive, send):
         if scope["type"] == "lifespan":
@@ -340,10 +380,13 @@ class DashboardGuard:
         # 1. Host, before anything else.
         hosts = headers.get("host", [])
         host = parse_host(hosts[0]) if len(hosts) == 1 else None
-        if host is None or not is_loopback(host):
+        host_header = hosts[0].lower() if host is not None else ""
+        if host is None or not (is_loopback(host) or host_header in self.hosts.get()):
             return await deny(400, "bad_host",
                               "This dashboard only answers to localhost / 127.0.0.1.")
-        host_header = hosts[0].lower()
+        # A configured extra host sits behind a TLS front, so its pages are
+        # https:// origins; loopback is served plain.
+        scheme = "http" if is_loopback(host) else "https"
 
         # 2. Browser provenance.
         public = is_public_path(method, path)
@@ -351,7 +394,7 @@ class DashboardGuard:
                       and headers.get("sec-fetch-mode", [""])[0] == "navigate"
                       and headers.get("sec-fetch-dest", [""])[0] == "document")
         origins = headers.get("origin", [])
-        if origins and (len(origins) != 1 or origins[0].lower() != f"http://{host_header}"):
+        if origins and (len(origins) != 1 or origins[0].lower() != f"{scheme}://{host_header}"):
             if not navigation:
                 return await deny(403, "cross_origin", "Cross-origin requests are refused.")
         site = headers.get("sec-fetch-site", [])

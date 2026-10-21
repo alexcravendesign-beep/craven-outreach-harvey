@@ -490,6 +490,32 @@ class WriterConfig(BaseModel):
     humanizer: bool = False
 
 
+class DashboardConfig(BaseModel):
+    # Extra ``Host`` values the dashboard answers to besides loopback, each
+    # as ``host`` or ``host:port`` exactly as a browser will send it. For a
+    # TLS front on a trusted private network only (Tailscale Serve on the
+    # machine running the dashboard): the dashboard still binds loopback and
+    # still needs the token; browser requests from such a host must carry an
+    # ``https://`` Origin naming it. Never a public hostname.
+    extra_hosts: list[str] = []
+
+    @field_validator("extra_hosts")
+    @classmethod
+    def _well_formed(cls, hosts: list[str]) -> list[str]:
+        from harvey.dashboard_auth import is_loopback, parse_host
+        out = []
+        for raw in hosts:
+            value = str(raw or "").strip().lower()
+            name = parse_host(value)
+            if name is None:
+                raise ValueError(f"dashboard.extra_hosts entry {raw!r} is not a host[:port]")
+            if is_loopback(name):
+                raise ValueError(f"dashboard.extra_hosts entry {raw!r} is loopback, which is always allowed")
+            if value not in out:
+                out.append(value)
+        return out
+
+
 class HarveyConfig(BaseModel):
     persona: PersonaConfig
     product: ProductConfig
@@ -499,6 +525,7 @@ class HarveyConfig(BaseModel):
     brain: BrainConfig = BrainConfig()
     compliance: ComplianceConfig = ComplianceConfig()
     writer: WriterConfig = WriterConfig()
+    dashboard: DashboardConfig = DashboardConfig()
     # Extension modules loaded after the config is read (see load_plugins).
     # Each names an importable module with an ``install(config, raw)``
     # function; a fork keeps its additions out of Harvey's core this way.

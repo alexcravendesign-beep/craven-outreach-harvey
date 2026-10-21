@@ -9,7 +9,7 @@ import logging
 
 logger = logging.getLogger("harvey.craven.schema")
 
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
 
 STATEMENTS = [
     # One row per suppressed address or domain. value is lower-cased.
@@ -49,6 +49,15 @@ STATEMENTS = [
         matched INTEGER NOT NULL DEFAULT 0,
         detail TEXT NOT NULL DEFAULT '',
         PRIMARY KEY (company_id, source)
+    )""",
+    # Where a venue is, copied from the owned pois rows by `harvey-craven
+    # sync-geo` so the dashboard map never reads Supabase per request.
+    """CREATE TABLE IF NOT EXISTS craven_geo (
+        company_id TEXT PRIMARY KEY,
+        lat REAL NOT NULL,
+        lng REAL NOT NULL,
+        postcode TEXT NOT NULL DEFAULT '',
+        synced_at TEXT NOT NULL
     )""",
 ]
 

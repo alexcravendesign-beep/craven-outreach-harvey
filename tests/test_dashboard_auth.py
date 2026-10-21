@@ -853,3 +853,164 @@ def test_app_js_only_talks_to_the_api_through_authfetch():
     assert "localStorage.setItem('harvey-dashboard" not in app
     html = (WEB / "index.html").read_text(encoding="utf-8")
     assert "downloadCsv('/api/export/prospects.csv'" in html
+
+
+# ── Extra hosts: a TLS front on a trusted private network (Tailscale) ──
+
+EXTRA = "nicks-mac-mini.tailbdd36b.ts.net:8443"
+EXTRA_ORIGIN = f"https://{EXTRA}"
+
+
+@pytest.fixture
+def extra_host(env):
+    dash.host_allowance.configure([EXTRA])
+    yield EXTRA
+    dash.host_allowance.configure([])
+
+
+def test_an_allowed_extra_host_passes_with_its_https_origin(extra_host, env):
+    with TestClient(dash.app, base_url=ORIGIN) as c:
+        headers = {"Host": EXTRA, "Authorization": f"Bearer {env['token']}"}
+        assert c.get("/api/companies", headers=headers).status_code == 200
+        browser = {**headers, "Origin": EXTRA_ORIGIN, "Sec-Fetch-Site": "same-origin", "Sec-Fetch-Mode": "cors"}
+        assert c.get("/api/companies", headers=browser).status_code == 200
+        r = c.post("/api/settings/env", json={"SMTP_HOST": "smtp.example.test"}, headers=browser)
+        assert r.status_code == 200 and r.json()["success"]
+        # The shell too, so the office can open it by that name.
+        assert c.get("/", headers={"Host": EXTRA}).status_code == 200
+        assert c.get("/static/app.js", headers={"Host": EXTRA}).status_code == 200
+
+
+def test_extra_host_is_matched_exactly_including_the_port(extra_host, env):
+    with TestClient(dash.app, base_url=ORIGIN) as c:
+        for host in ("nicks-mac-mini.tailbdd36b.ts.net", "nicks-mac-mini.tailbdd36b.ts.net:443",
+                     "x.nicks-mac-mini.tailbdd36b.ts.net:8443", "other.tailbdd36b.ts.net:8443", "evil.example"):
+            r = c.get("/api/companies", headers={"Host": host, "Authorization": f"Bearer {env['token']}"})
+            assert r.status_code == 400, host
+        # Case-insensitive, as DNS names are.
+        r = c.get("/api/companies", headers={"Host": EXTRA.upper(), "Authorization": f"Bearer {env['token']}"})
+        assert r.status_code == 200
+
+
+@pytest.mark.parametrize("origin", [
+    f"http://{EXTRA}",                        # the front terminates TLS; plain http is not this origin
+    "https://nicks-mac-mini.tailbdd36b.ts.net",
+    "https://evil.example", "null", ORIGIN, f"{EXTRA_ORIGIN}.evil.example",
+])
+def test_extra_host_with_any_other_origin_is_refused(extra_host, env, origin):
+    with TestClient(dash.app, base_url=ORIGIN) as c:
+        headers = {"Host": EXTRA, "Authorization": f"Bearer {env['token']}", "Origin": origin}
+        assert c.get("/api/companies", headers=headers).status_code == 403, origin
+        assert c.post("/api/sending/pause", headers=headers).status_code == 403, origin
+        assert not dash.ENV_FILE.exists()
+
+
+def test_extra_host_cross_site_metadata_is_refused(extra_host, env):
+    with TestClient(dash.app, base_url=ORIGIN) as c:
+        headers = {"Host": EXTRA, "Authorization": f"Bearer {env['token']}", **CROSS_SITE}
+        assert c.get("/api/companies", headers=headers).status_code == 403
+
+
+def test_extra_host_still_needs_the_token(extra_host, env):
+    with TestClient(dash.app, base_url=ORIGIN) as c:
+        r = c.get("/api/companies", headers={"Host": EXTRA, "Origin": EXTRA_ORIGIN, "Sec-Fetch-Site": "same-origin"})
+        assert r.status_code == 401 and r.headers["www-authenticate"].startswith("Bearer")
+        r = c.get("/api/companies", headers={"Host": EXTRA, "Authorization": "Bearer wrong"})
+        assert r.status_code == 401
+
+
+def test_loopback_origin_rules_are_unchanged_by_extra_hosts(extra_host, env):
+    """A loopback Host still wants its http:// origin, never an https one."""
+    with TestClient(dash.app, base_url=ORIGIN) as c:
+        ok = {"Authorization": f"Bearer {env['token']}", "Origin": ORIGIN, "Sec-Fetch-Site": "same-origin"}
+        assert c.get("/api/companies", headers=ok).status_code == 200
+        bad = {**ok, "Origin": "https://127.0.0.1:5555"}
+        assert c.get("/api/companies", headers=bad).status_code == 403
+        bad = {**ok, "Origin": EXTRA_ORIGIN}
+        assert c.get("/api/companies", headers=bad).status_code == 403
+
+
+def test_without_extra_hosts_the_tailnet_name_is_refused(env):
+    assert dash.host_allowance.get() == ()
+    with TestClient(dash.app, base_url=ORIGIN) as c:
+        r = c.get("/api/companies", headers={"Host": EXTRA, "Authorization": f"Bearer {env['token']}"})
+        assert r.status_code == 400
+
+
+@pytest.mark.parametrize("value", ["localhost:8443", "127.0.0.1", "[::1]:8443", "", "evil example", "a:b:c", "[::1"])
+def test_host_allowance_refuses_loopback_and_malformed_entries(value):
+    with pytest.raises(ValueError):
+        auth.HostAllowance([value])
+    with pytest.raises(ValueError):
+        from harvey.config import DashboardConfig
+        DashboardConfig(extra_hosts=[value])
+
+
+def test_host_allowance_normalises_and_dedupes():
+    store = auth.HostAllowance([" Nicks-Mac-Mini.tailbdd36b.ts.net:8443 ", EXTRA, "10.0.0.5"])
+    assert store.get() == (EXTRA, "10.0.0.5")
+    from harvey.config import DashboardConfig, HarveyConfig
+    assert DashboardConfig(extra_hosts=[EXTRA.upper(), EXTRA]).extra_hosts == [EXTRA]
+    assert "dashboard" in HarveyConfig.model_fields and DashboardConfig().extra_hosts == []
+
+
+def test_startup_reads_extra_hosts_from_the_config(env, monkeypatch):
+    import harvey.config as config_mod
+
+    class Cfg:
+        class dashboard:
+            extra_hosts = [EXTRA]
+    monkeypatch.setattr(config_mod, "load_config", lambda config_path=None: Cfg())
+    try:
+        assert dash.configure_extra_hosts() == (EXTRA,)
+
+        def missing(config_path=None):
+            raise config_mod.ConfigFileNotFoundError("none")
+        monkeypatch.setattr(config_mod, "load_config", missing)
+        assert dash.configure_extra_hosts() == ()
+    finally:
+        dash.host_allowance.configure([])
+
+
+def test_bind_stays_loopback_whatever_extra_hosts_say(extra_host, monkeypatch):
+    with pytest.raises(dash.DashboardSetupError):
+        dash.start_dashboard(host="0.0.0.0")
+    with pytest.raises(dash.DashboardSetupError):
+        dash.start_dashboard(host="nicks-mac-mini.tailbdd36b.ts.net")
+
+
+# ── The map's one external host, and the vendored map library ──
+
+
+def test_csp_allows_only_basemap_tiles_beyond_self(anon):
+    csp = anon.get("/").headers["content-security-policy"]
+    directives = {d.split()[0]: d.split()[1:] for d in csp.split(";") if d.strip()}
+    assert directives["img-src"] == ["'self'", "data:", "https://tile.openstreetmap.org"]
+    assert directives["script-src"] == ["'self'", "'unsafe-inline'"]
+    assert directives["connect-src"] == ["'self'"]
+    assert directives["style-src"] == ["'self'", "'unsafe-inline'"]
+    assert directives["font-src"] == ["'self'"]
+    assert directives["default-src"] == ["'self'"]
+    assert auth.TILE_HOSTS == "https://tile.openstreetmap.org"
+
+
+def test_leaflet_is_vendored_and_served_from_self(anon, env):
+    import base64
+    import hashlib
+    expected = {"leaflet.js": "20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=",
+                "leaflet.css": "p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="}
+    for name, digest in expected.items():
+        # The vendored file is byte-for-byte the 1.9.4 release (its SRI hash);
+        # it is served as text, so compare the served text to the file.
+        path = WEB / "vendor" / "leaflet" / name
+        assert base64.b64encode(hashlib.sha256(path.read_bytes()).digest()).decode() == digest, name
+        r = anon.get(f"/static/vendor/leaflet/{name}")
+        assert r.status_code == 200 and env["token"] not in r.text
+        assert r.text == path.read_text(encoding="utf-8")
+    assert r.headers["content-type"].startswith("text/css")
+    html = anon.get("/").text
+    assert 'src="/static/vendor/leaflet/leaflet.js"' in html and 'href="/static/vendor/leaflet/leaflet.css"' in html
+    assert "unpkg.com" not in html and "cdn" not in html.lower()
+    app_js = (WEB / "app.js").read_text(encoding="utf-8")
+    assert "https://tile.openstreetmap.org/" in app_js and "crossOrigin: 'anonymous'" in app_js
+    assert "cartocdn" not in app_js

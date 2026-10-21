@@ -57,10 +57,29 @@ def install(config, raw: dict) -> None:
     profile.COLLECTOR_CLASS = CravenProfileCollector
     if not any(name == "craven_enrich" for name, _ in main.CYCLE_HOOKS):
         main.CYCLE_HOOKS.append(("craven_enrich", cycle_hook))
+    _install_dashboard()
     logger.info(
         "Craven plugin installed (tenant=%s, corporate_subscribers_only=%s)",
         SETTINGS.tenant, SETTINGS.compliance.corporate_subscribers_only,
     )
+
+
+def _install_dashboard() -> None:
+    """What the dashboard's venue page, map and Draft action read from this
+    plugin (harvey.dashboard_ext keeps the routes generic)."""
+    from harvey import dashboard_ext as ext
+    from harvey.craven import geo
+    from harvey.craven.writer import NEVER_IN_COPY, draft_one, fact_lines
+    ext.GEO_TABLE = "craven_geo"
+    ext.LEAD_OF = lambda observations: fact_lines(observations)[1]
+    ext.DOSSIER_CODE = "VENUE_DOSSIER"
+    # The hygiene family never goes in an email (writer rule); the mailbox
+    # and compliance facts are shown as what they are, not hidden.
+    ext.REVIEWER_ONLY_CODES = frozenset(
+        {"FHRS_RATING", "FHRS_HYGIENE_SCORE", "FHRS_STRUCTURAL_SCORE", "FHRS_MANAGEMENT_SCORE"}
+        | {c for c in NEVER_IN_COPY if c.startswith("FHRS_")})
+    ext.FIGURES = geo.figures
+    ext.DRAFT_ONE = draft_one
 
 
 def _install_skills() -> None:

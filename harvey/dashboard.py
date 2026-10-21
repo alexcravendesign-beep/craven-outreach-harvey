@@ -5,6 +5,7 @@ import ipaddress
 import json
 import logging
 import os
+import re
 import signal
 import stat
 import subprocess
@@ -25,6 +26,7 @@ from fastapi.responses import (
 logger = logging.getLogger("harvey.dashboard")
 
 from harvey import dashboard_auth as auth  # noqa: E402
+from harvey import dashboard_ext as ext  # noqa: E402
 from harvey.paths import PROJECT_ROOT  # noqa: E402
 from harvey.config import load_plugins_best_effort  # noqa: E402
 from harvey.textio import read_user_text  # noqa: E402
@@ -51,7 +53,10 @@ def _resolve_config_file() -> Path:
 # route except the static shell needs the token (see dashboard_auth).
 app = FastAPI(title="Harvey Dashboard", docs_url=None, redoc_url=None, openapi_url=None)
 token_store = auth.TokenStore(TOKEN_FILE)
-app.add_middleware(auth.DashboardGuard, store=token_store)
+# Extra hosts (dashboard.extra_hosts) are read from the config at startup;
+# empty means loopback only.
+host_allowance = auth.HostAllowance()
+app.add_middleware(auth.DashboardGuard, store=token_store, hosts=host_allowance)
 
 # Harvey process tracking
 _harvey_process: subprocess.Popen | None = None
@@ -440,6 +445,148 @@ async def get_company_contacts(company_id: str):
     return rows
 
 
+def _observation_value(o: dict, value_type: str = "") -> str:
+    if o.get("value_text"):
+        return str(o["value_text"])
+    num = o.get("value_num")
+    if num is None:
+        return ""
+    if value_type == "bool" or (value_type == "" and num in (0, 1, 0.0, 1.0)):
+        return "yes" if num else "no"
+    return str(int(num)) if float(num).is_integer() else str(num)
+
+
+def _parse_document(text: str) -> dict | None:
+    try:
+        doc = json.loads(text or "")
+    except (ValueError, TypeError):
+        return None
+    return doc if isinstance(doc, dict) else None
+
+
+@app.get("/api/companies/{company_id}")
+async def get_company_detail(company_id: str):
+    """One company as a reviewer sees it: its latest observation per signal
+    with the evidence behind it, the plugin's document about it (if any),
+    its prospects and every Outbox draft written to them. The plugin says
+    which signal leads and which are for the reviewer's eyes only."""
+    rows = await query_db("SELECT * FROM companies WHERE id = ?", (company_id,))
+    if not rows:
+        return JSONResponse({"error": "not_found", "message": "No such company."}, status_code=404)
+    company = rows[0]
+    load_plugins_best_effort()
+    codes = {r["code"]: r for r in await query_db("SELECT * FROM signal_codes")}
+    # Oldest first, so the latest observation per signal wins.
+    observations = await query_db(
+        "SELECT * FROM observations WHERE company_id = ? ORDER BY observed_at, id", (company_id,))
+    latest: dict[str, dict] = {}
+    for o in observations:
+        latest[o["signal_code"]] = o
+    lead = ""
+    if ext.LEAD_OF is not None:
+        try:
+            lead = ext.LEAD_OF(observations) or ""
+        except Exception as e:
+            logger.warning("lead signal unavailable for %s: %s", company_id, e)
+    dossier = None
+    signals = []
+    for code, o in latest.items():
+        meta = codes.get(code, {})
+        if code == ext.DOSSIER_CODE:
+            dossier = _parse_document(o.get("value_text") or "")
+            continue
+        signals.append({
+            "code": code,
+            "label": meta.get("label") or code,
+            "category": meta.get("category", ""),
+            "value": _observation_value(o, meta.get("value_type", "")),
+            "value_num": o.get("value_num"),
+            "value_text": o.get("value_text") or "",
+            "confidence": o.get("confidence"),
+            "evidence_url": o.get("evidence_url") or "",
+            "collector": o.get("collector") or "",
+            "observed_at": o.get("observed_at"),
+            "reviewer_only": code in ext.REVIEWER_ONLY_CODES,
+            "lead": code == lead,
+        })
+    signals.sort(key=lambda s: (not s["lead"], s["reviewer_only"], s["category"], s["label"]))
+    prospects = await query_db(
+        "SELECT * FROM prospects WHERE company_id = ? ORDER BY score DESC, created_at", (company_id,))
+    pids = [p["id"] for p in prospects]
+    drafts = await query_db(
+        f"SELECT * FROM outbox WHERE prospect_id IN ({_in(pids)}) ORDER BY created_at DESC",
+        tuple(pids)) if pids else []
+    return {
+        "company": company,
+        "lead": lead,
+        "signals": signals,
+        "dossier": dossier,
+        "prospects": prospects,
+        "drafts": drafts,
+        "reviewer_only_note": ("Reviewer only: these never go into an email."
+                               if any(s["reviewer_only"] for s in signals) else ""),
+    }
+
+
+_TABLE_NAME_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+
+
+@app.get("/api/map")
+async def get_map():
+    """Pins for every company the plugin has placed, with how reachable each
+    one is and which signal would lead its email. Existing customers are
+    suppressed addresses, not companies, so they come back as a figure only."""
+    load_plugins_best_effort()
+    table = ext.GEO_TABLE
+    if not table or not _TABLE_NAME_RE.fullmatch(table):
+        return {"available": False, "pins": [], "figures": {},
+                "message": "No plugin keeps coordinates, so there is nothing to map."}
+    placed = await query_db(
+        f"SELECT g.company_id, g.lat, g.lng, g.postcode, c.name, c.industry, c.location "
+        f"FROM {table} g JOIN companies c ON c.id = g.company_id ORDER BY c.name")
+    if not placed:
+        return {"available": True, "pins": [], "figures": await _map_figures(), "message": ""}
+    ids = [p["company_id"] for p in placed]
+    reach: dict[str, str] = {}
+    for r in await query_db(
+            f"SELECT company_id, email, email_status FROM prospects WHERE company_id IN ({_in(ids)}) "
+            "AND email != ''", tuple(ids)):
+        rank = "emailable" if r["email_status"] in ("verified", "risky") else "mailbox"
+        if rank == "emailable" or reach.get(r["company_id"]) is None:
+            reach[r["company_id"]] = rank
+    leads: dict[str, str] = {}
+    if ext.LEAD_OF is not None:
+        by_company: dict[str, list[dict]] = {}
+        for o in await query_db(
+                f"SELECT * FROM observations WHERE company_id IN ({_in(ids)}) ORDER BY observed_at, id",
+                tuple(ids)):
+            by_company.setdefault(o["company_id"], []).append(o)
+        for cid, obs in by_company.items():
+            try:
+                leads[cid] = ext.LEAD_OF(obs) or ""
+            except Exception:
+                leads[cid] = ""
+    pins = [{
+        "id": p["company_id"], "name": p["name"], "lat": p["lat"], "lng": p["lng"],
+        "postcode": p["postcode"], "industry": p["industry"], "location": p["location"],
+        "reachability": reach.get(p["company_id"], "none"),
+        "lead": leads.get(p["company_id"], ""),
+    } for p in placed]
+    return {"available": True, "pins": pins, "figures": await _map_figures(), "message": ""}
+
+
+async def _map_figures() -> dict:
+    if ext.FIGURES is None:
+        return {}
+    try:
+        state = _state()
+        await state.init_db()
+        return {k: int(v) for k, v in (await ext.FIGURES(state)).items()}
+    except Exception as e:
+        logger.warning("map figures unavailable: %s", e)
+        return {}
+
+
 # ── Feedback ──
 
 
@@ -826,6 +973,7 @@ async def _with_context(items: list[dict]) -> list[dict]:
         item["context"] = {
             "campaign": campaigns.get(item.get("campaign_id"), ""),
             "company": p.get("company_name", ""),
+            "company_id": p.get("company_id", ""),
             "website": p.get("website") or (f"https://{p['domain']}" if p.get("domain") else ""),
             "description": p.get("description", ""),
             "found_by": p.get("found_by", ""),
@@ -1129,13 +1277,24 @@ async def mark_prospect_sent(prospect_id: str, request: Request):
 
 
 @app.post("/api/outbox/{item_id}/reject")
-async def outbox_reject(item_id: str):
+async def outbox_reject(item_id: str, request: Request):
+    """Reject a draft. An optional ``reason`` in the body is kept as
+    feedback on the draft (entity ``outbox``), so the patterns behind
+    rejections can be read back later; the draft itself is unchanged."""
+    reason = ""
+    try:
+        body = await request.json()
+        if isinstance(body, dict):
+            reason = str(body.get("reason") or "").strip()[:4000]
+    except Exception:
+        pass  # no body: a plain reject
     try:
         state = _state()
         await state.init_db()
         if not await state.reject_outbox_item(item_id):
             return _refuse("That email is already sending or sent, so it can't be rejected.")
-        return {"success": True}
+        feedback_id = await state.add_feedback("outbox", item_id, reason) if reason else ""
+        return {"success": True, "feedback_id": feedback_id}
     except Exception as e:
         return JSONResponse({"success": False, "message": str(e)}, status_code=500)
 
@@ -1967,6 +2126,92 @@ async def export_cohort(require: str = "", exclude: str = ""):
     )
 
 
+DRAFT_BATCH_DEFAULT = 20
+DRAFT_BATCH_MAX = 50
+# A prospect with mail in any of these states already has its first email.
+_DRAFTED_STATES = ("pending_review", "approved", "sending", "sent")
+
+
+@app.post("/api/craven/draft-batch")
+async def draft_batch(request: Request):
+    """Stage up to ``limit`` grounded first emails for cohort companies that
+    have a prospect and no first email yet. Every draft lands in the Outbox
+    as pending_review; nothing sends. The writer is the plugin's, it thinks
+    with the brain, and it only runs when the brain's preflight passes."""
+    try:
+        body = await request.json()
+        if not isinstance(body, dict):
+            raise ValueError("request body must be an object")
+        require = _codes(body.get("require"))
+        exclude = _codes(body.get("exclude"))
+        limit = min(max(1, _cohort_integer(body.get("limit"), DRAFT_BATCH_DEFAULT)), DRAFT_BATCH_MAX)
+    except (ValueError, TypeError) as e:
+        return JSONResponse({"success": False, "message": str(e)}, status_code=400)
+    if not require:
+        return _refuse("Pick at least one must-have signal first.", 400)
+
+    load_plugins_best_effort()
+    if ext.DRAFT_ONE is None:
+        return _refuse("No plugin provides a writer for this, so nothing can be drafted.")
+    try:
+        from harvey.config import load_config, load_env
+        config = load_config()
+        env = load_env()
+    except Exception as e:
+        return _refuse(f"Harvey's config can't be loaded, so nothing can be drafted: {str(e)[:200]}")
+
+    from harvey.brain import Brain
+    state = _state()
+    await state.init_db()
+    brain = Brain(state, config.brain)
+    try:
+        why = await brain.preflight()
+    except Exception as e:
+        why = f"{type(e).__name__}: {e}"
+    if why:
+        return _refuse(
+            f"{why} Drafting needs the model: run the dashboard from your logged-in desktop "
+            "session (where 'claude' can read its login), then try again.")
+
+    size, rows = await state.cohort_companies(require, exclude)
+    cids = [r["id"] for r in rows]
+    with_prospect: dict[str, list[dict]] = {}
+    for p in (await query_db(
+            f"SELECT id, company_id FROM prospects WHERE company_id IN ({_in(cids)})",
+            tuple(cids)) if cids else []):
+        with_prospect.setdefault(p["company_id"], []).append(p)
+    pids = [p["id"] for ps in with_prospect.values() for p in ps]
+    already = {r["prospect_id"] for r in (await query_db(
+        f"SELECT prospect_id FROM outbox WHERE prospect_id IN ({_in(pids)}) "
+        f"AND status IN ({_in(_DRAFTED_STATES)})", (*pids, *_DRAFTED_STATES)) if pids else [])}
+
+    drafted, failed = [], []
+    skipped_no_prospect = skipped_already = 0
+    for r in rows:
+        if len(drafted) >= limit:
+            break
+        prospects = with_prospect.get(r["id"])
+        if not prospects:
+            skipped_no_prospect += 1
+            continue
+        if any(p["id"] in already for p in prospects):
+            skipped_already += 1
+            continue
+        try:
+            out = await ext.DRAFT_ONE(state, brain, config, env, r["id"])
+        except Exception as e:
+            logger.warning("draft-batch: %s failed: %s", r.get("name"), e)
+            out = None
+        if out:
+            drafted.append({"company_id": r["id"], "company": out.get("company", r.get("name")),
+                            "to": out.get("to", ""), "outbox_id": out.get("outbox_id", ""),
+                            "lead": out.get("lead", ""), "subject": out.get("subject", "")})
+        else:
+            failed.append({"company_id": r["id"], "company": r.get("name", "")})
+    return {"success": True, "cohort": size, "limit": limit, "drafted": drafted, "failed": failed,
+            "skipped_no_prospect": skipped_no_prospect, "skipped_already_drafted": skipped_already}
+
+
 @app.get("/api/runs")
 async def get_runs_api():
     """The collector run log — what ran, when, what it produced and cost."""
@@ -2049,6 +2294,19 @@ def dashboard_url(host: str = "127.0.0.1", port: int = 5555) -> str:
     return f"http://{name}:{port}/#token={token_store.get()}"
 
 
+def configure_extra_hosts() -> tuple[str, ...]:
+    """Read ``dashboard.extra_hosts`` from the config (none when there is
+    no usable config) into the guard. The bind stays loopback either way."""
+    from harvey.config import load_config
+    try:
+        hosts = load_config().dashboard.extra_hosts
+    except Exception as e:
+        logger.debug(f"No dashboard.extra_hosts read: {str(e)[:120]}")
+        hosts = []
+    host_allowance.configure(hosts)
+    return host_allowance.get()
+
+
 def start_dashboard(host: str = "127.0.0.1", port: int = 5555):
     """Start the dashboard server (loopback only, token required)."""
     import uvicorn
@@ -2058,6 +2316,10 @@ def start_dashboard(host: str = "127.0.0.1", port: int = 5555):
         url = dashboard_url(host, port)
     except (DashboardSetupError, auth.TokenError) as e:
         raise DashboardSetupError(str(e)) from e
+    extra = configure_extra_hosts()
+    if extra:
+        print(f"\n  Also answering to {', '.join(extra)} (dashboard.extra_hosts): keep that")
+        print("  name on your private network only, behind TLS, and unlock it with the same token.")
 
     print(f"\n  Harvey Dashboard running. Open this link to unlock it:\n\n    {url}\n")
     print(f"  The token is stored in {token_store.path} (owner-only). Keep the link")
