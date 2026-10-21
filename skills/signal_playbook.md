@@ -17,6 +17,12 @@ source by name. A wrong specific is worse than a right generic.
 Every email names the venue (`{{company}}`), not a person: we write to the
 shared mailbox. Second person plural is natural ("you're", "your kitchen").
 
+**The "Good" lines below show the register, not the words.** Never copy an
+example sentence into an email. Write your own in that register, from the
+venue's own facts. In a batch, no two emails may open the same way, and the
+phrases "lets a kitchen down on the day" and "without a sales visit" are
+examples here, not stock lines: use each at most once in a batch, if at all.
+
 ## Which signal leads
 
 When a venue has several, the first line uses the first match in this order:
