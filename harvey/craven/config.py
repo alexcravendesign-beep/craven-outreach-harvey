@@ -52,6 +52,17 @@ class CravenEnrichmentConfig(BaseModel):
     companies_house_location: str = "Swansea"
     companies_house_sweep_days: int = 180
     recheck_days: int = 90
+    # Council licensing notices (Licensing Act 2003) and planning applications
+    # (via PlanIt). See collectors/SOURCES-licensing-planning.md for what each
+    # council publishes. Records outside the pilot outcodes are ignored.
+    area_outcodes: list[str] = [f"SA{i}" for i in range(1, 21)] + [f"CF{i}" for i in range(31, 37)]
+    licensing_councils: list[str] = ["swansea", "npt", "carmarthenshire", "bridgend", "powys"]
+    licensing_cache_days: int = 1
+    planning_areas: list[str] = ["Swansea", "Neath", "Carmarthenshire", "Bridgend", "Powys"]
+    planning_recent_days: int = 120
+    planning_cache_days: int = 1
+    planning_search: str = ('"change of use" or restaurant or cafe or café or takeaway or "hot food" or bar '
+                            'or "public house" or hotel or kitchen or extraction or refurbishment')
 
 
 class CravenConfig(BaseModel):

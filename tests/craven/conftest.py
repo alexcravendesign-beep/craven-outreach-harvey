@@ -65,6 +65,9 @@ class FakeSupabase:
         if pc.startswith("like."):
             prefix = pc[5:].rstrip("*")
             rows = [r for r in rows if (r.get("postcode") or "").startswith(prefix)]
+        elif pc.startswith("in.("):
+            wanted_pcs = {x.strip('"') for x in pc[4:-1].split(",")}
+            rows = [r for r in rows if (r.get("postcode") or "") in wanted_pcs]
         ids = q.get("id", "")
         if ids.startswith("in.("):
             wanted = set(ids[4:-1].split(","))

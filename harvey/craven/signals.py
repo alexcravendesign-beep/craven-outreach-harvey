@@ -143,6 +143,63 @@ CRAVEN_SIGNAL_CATALOG: list[dict] = [
         "cost_note": "free (Companies House API key)", "confidence_floor": 0.0,
     },
 
+    # ── Discovery: council licensing notices (Licensing Act 2003, free) ──
+    {
+        "code": "NEW_PREMISES_LICENCE_APPLICATION",
+        "label": "New premises licence applied for",
+        "description": (
+            "The venue has applied to its council for a new premises licence (to sell "
+            "alcohol, serve late-night food or put on entertainment). A new licence is "
+            "applied for weeks before opening or before a new operator starts trading: "
+            "the strongest 'why today' there is. value_text carries the kind of "
+            "application, the closing date for representations and the activities. "
+            "The angle is 'looks like you're getting ready to open': kit chosen now, "
+            "a showroom ten minutes away, prices the same day."
+        ),
+        "category": "discovery", "value_type": "bool", "collector": "licensing",
+        "cost_note": "free (council licensing notice pages)", "confidence_floor": 0.85,
+    },
+    {
+        "code": "LICENCE_VARIATION",
+        "label": "Premises licence variation applied for",
+        "description": (
+            "An application to vary an existing premises licence: longer hours, a bigger "
+            "licensed area, a new kitchen or late-night refreshment. More trade through the "
+            "same fridges, or a kitchen that did not exist before. value_text says what "
+            "changes. The angle is the extra load: is the chilled kit sized for it."
+        ),
+        "category": "discovery", "value_type": "text", "collector": "licensing",
+        "cost_note": "free (council licensing notice pages)", "confidence_floor": 0.85,
+    },
+
+    # ── Discovery: planning applications (PlanIt API over the councils' portals, free) ──
+    {
+        "code": "PLANNING_CHANGE_OF_USE",
+        "label": "Planning: change of use to a food or drink venue",
+        "description": (
+            "A planning application to turn premises into a restaurant, cafe, takeaway, "
+            "bar, pub, hotel or similar (Welsh Use Class A3/C1), or to build one. A new "
+            "venue in planning: the fit-out, and the refrigeration order, is months away "
+            "but the operator is deciding now. value_text is the proposed use. The angle "
+            "is help with the plan: what kit a venue like that needs, with prices, before "
+            "the fit-out is costed."
+        ),
+        "category": "discovery", "value_type": "text", "collector": "planning",
+        "cost_note": "free (PlanIt API, rate limited)", "confidence_floor": 0.85,
+    },
+    {
+        "code": "PLANNING_REFIT",
+        "label": "Planning: works at an existing venue",
+        "description": (
+            "A planning application for an extension, refurbishment, kitchen, extraction "
+            "flue, servery, terrace or bar at an existing pub, restaurant, cafe, hotel, "
+            "takeaway or club. A refit is coming: tired kit gets replaced during one. "
+            "value_text is the works. The angle is timing the replacement with the works."
+        ),
+        "category": "discovery", "value_type": "text", "collector": "planning",
+        "cost_note": "free (PlanIt API, rate limited)", "confidence_floor": 0.85,
+    },
+
     # ── Profile: their own website ──
     {
         "code": "MENU_EQUIPMENT_CLASS",

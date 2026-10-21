@@ -6,6 +6,8 @@ Harvey's CLI stays untouched).
   harvey-craven suppress --email info@x.co [--reason manual] | --domain x.co
   harvey-craven sync                      # pull the suppression list from Supabase
   harvey-craven check <email>             # is this address suppressed / a role mailbox?
+  harvey-craven licensing [--council npt] # council premises licence notices -> signals / new companies
+  harvey-craven planning [--area Swansea] # PlanIt planning applications -> signals / new companies
 """
 
 import argparse
@@ -112,6 +114,30 @@ def cmd_sweep(args):
     asyncio.run(go())
 
 
+def cmd_licensing(args):
+    _, state, settings = _boot()
+
+    async def go():
+        from harvey.craven.collectors.licensing import enrich_licensing
+        from harvey.craven.schema import ensure_schema
+        from harvey.craven.supabase import SupabaseRest
+        await state.init_db(); await ensure_schema(state)
+        print(await enrich_licensing(state, settings, SupabaseRest.from_env(), councils=args.council or None))
+    asyncio.run(go())
+
+
+def cmd_planning(args):
+    _, state, settings = _boot()
+
+    async def go():
+        from harvey.craven.collectors.planning import enrich_planning
+        from harvey.craven.schema import ensure_schema
+        from harvey.craven.supabase import SupabaseRest
+        await state.init_db(); await ensure_schema(state)
+        print(await enrich_planning(state, settings, SupabaseRest.from_env(), areas=args.area or None))
+    asyncio.run(go())
+
+
 def cmd_draft(args):
     config, state, settings = _boot()
 
@@ -196,6 +222,15 @@ def main(argv=None):
 
     sw = subs.add_parser("sweep-new-companies", help="new hospitality incorporations in the area (Companies House)")
     sw.set_defaults(func=cmd_sweep)
+
+    li = subs.add_parser("licensing", help="council premises licence notices (new applications and variations; free)")
+    li.add_argument("--council", action="append", choices=["swansea", "npt", "carmarthenshire", "bridgend", "powys"],
+                    help="one council (repeatable); default all five")
+    li.set_defaults(func=cmd_licensing)
+
+    pl = subs.add_parser("planning", help="planning applications via PlanIt: change of use to a venue, refits (free, rate limited)")
+    pl.add_argument("--area", action="append", help="PlanIt area name (repeatable): Swansea, Neath, Carmarthenshire, Bridgend, Powys")
+    pl.set_defaults(func=cmd_planning)
 
     ms = subs.add_parser("scrape-mailboxes", help="find a venue's own mailbox on its website (free, no model)")
     ms.add_argument("--limit", type=int, default=300)

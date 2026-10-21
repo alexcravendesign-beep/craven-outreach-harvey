@@ -17,8 +17,13 @@ logger = logging.getLogger("harvey.craven.writer")
 # Playbook lead order; the first present leads the email.
 # "Awaiting inspection" was dropped (Nick, 21 Oct 2026): a new registration
 # may be a new venue or new hands at an old one; too ambiguous to write from.
-LEAD_ORDER = ("CH_NEW_INCORPORATION_DAYS", "CH_OFFICER_CHANGE_DAYS",
+LEAD_ORDER = ("NEW_PREMISES_LICENCE_APPLICATION", "PLANNING_CHANGE_OF_USE", "LICENCE_VARIATION", "PLANNING_REFIT",
+              "CH_NEW_INCORPORATION_DAYS", "CH_OFFICER_CHANGE_DAYS",
               "FHRS_STRUCTURAL_SCORE", "FHRS_INSPECTION_AGE_DAYS", "MENU_EQUIPMENT_CLASS", "VENUE_CATEGORY")
+# A council application is a "why today" only while it is current: a licence
+# notice for about four months after it was seen, a planning application for a year.
+FRESH_DAYS = {"NEW_PREMISES_LICENCE_APPLICATION": 120, "LICENCE_VARIATION": 120,
+              "PLANNING_CHANGE_OF_USE": 365, "PLANNING_REFIT": 365}
 NEVER_IN_COPY = {"FHRS_HYGIENE_SCORE", "FHRS_MANAGEMENT_SCORE", "ROLE_MAILBOX", "INDEPENDENT_VENUE",
                  "CH_INCORPORATED", "EMAIL_STATUS", "FOUND_IN_SERP", "FHRS_AWAITING_INSPECTION"}
 # VENUE_DOSSIER is rendered separately (below the lead), never as a lead itself.
@@ -56,6 +61,14 @@ def fact_lines(observations: list[dict]) -> tuple[list[str], str]:
             return False
         if code == "FHRS_AWAITING_INSPECTION":
             return (o.get("value_num") or 0) == 1
+        if code in FRESH_DAYS:
+            from harvey.craven.collectors.common import days_since
+            age = days_since(o.get("observed_at") or "")
+            if age is not None and age > FRESH_DAYS[code]:
+                return False
+            if code == "NEW_PREMISES_LICENCE_APPLICATION":
+                return (o.get("value_num") or 0) == 1
+            return bool(o.get("value_text"))
         if code == "FHRS_STRUCTURAL_SCORE":
             return (o.get("value_num") or 0) >= 10
         if code == "FHRS_INSPECTION_AGE_DAYS":
@@ -76,6 +89,23 @@ def fact_lines(observations: list[dict]) -> tuple[list[str], str]:
         o = latest[code]
         if code == "FHRS_AWAITING_INSPECTION":
             line = "The venue is newly registered and waiting for its first food hygiene inspection: it is opening, or has just opened (lead signal: fit-out window)."
+        elif code == "NEW_PREMISES_LICENCE_APPLICATION":
+            line = (f"They have applied to the council for a new premises licence ({o.get('value_text') or 'current notice'}): "
+                    "it looks like the venue is getting ready to open, or a new operator is about to start, a few weeks from now "
+                    "(lead signal: opening weeks away; say it as 'looks like you're getting ready to open', as anyone passing "
+                    "the notice on the door could; never mention the council, the application or the licence).")
+        elif code == "PLANNING_CHANGE_OF_USE":
+            line = (f"A planning application proposes turning the premises into {o.get('value_text') or 'a food or drink venue'}: "
+                    "a new venue in planning, with the fit-out months away but being costed now "
+                    "(lead signal: new venue in planning; say it as 'looks like a new place is coming'; never cite the planning application).")
+        elif code == "LICENCE_VARIATION":
+            line = (f"They have applied to vary their premises licence ({o.get('value_text') or 'variation'}): usually longer hours, "
+                    "a bigger licensed area or a kitchen that did not exist before, so more trade through the same fridges "
+                    "(lead signal: expanding; ask whether the chilled kit is sized for it; never mention the licence or the council).")
+        elif code == "PLANNING_REFIT":
+            line = (f"A planning application for works at the premises ({o.get('value_text') or 'works'}): a refit is coming, "
+                    "and tired kit gets replaced during one (lead signal: refit; say it as 'looks like you've got work planned'; "
+                    "never cite the planning application).")
         elif code == "CH_NEW_INCORPORATION_DAYS":
             line = f"A new company behind the venue was set up about {int(o['value_num'])} days ago (lead signal: opening soon)."
         elif code == "CH_OFFICER_CHANGE_DAYS":
