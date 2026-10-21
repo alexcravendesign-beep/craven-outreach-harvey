@@ -200,9 +200,11 @@ class OvertureSupabase(DiscoveryProvider):
                 {"signal_code": "VENUE_CATEGORY", "value_text": r.get("category") or ""},
                 {"signal_code": "INDEPENDENT_VENUE", "value_num": independent},
             ]
-            if email and compliance.is_role_address(email):
-                observations.append({"signal_code": "ROLE_MAILBOX", "value_text": email,
-                                     "evidence_url": website or ""})
+            if email:
+                ok, why = compliance.is_business_mailbox(email, r.get("name") or "", r.get("website") or "")
+                if ok:
+                    observations.append({"signal_code": "ROLE_MAILBOX", "value_text": email,
+                                         "evidence_url": website or "", "confidence": 1.0 if why == "role local part" else 0.9})
             out.append(Business(
                 name=(r.get("name") or "").strip(),
                 domain=domain,

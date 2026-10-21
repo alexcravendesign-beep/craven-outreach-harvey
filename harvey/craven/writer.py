@@ -21,6 +21,7 @@ LEAD_ORDER = ("CH_NEW_INCORPORATION_DAYS", "CH_OFFICER_CHANGE_DAYS",
               "FHRS_STRUCTURAL_SCORE", "FHRS_INSPECTION_AGE_DAYS", "MENU_EQUIPMENT_CLASS", "VENUE_CATEGORY")
 NEVER_IN_COPY = {"FHRS_HYGIENE_SCORE", "FHRS_MANAGEMENT_SCORE", "ROLE_MAILBOX", "INDEPENDENT_VENUE",
                  "CH_INCORPORATED", "EMAIL_STATUS", "FOUND_IN_SERP", "FHRS_AWAITING_INSPECTION"}
+# VENUE_DOSSIER is rendered separately (below the lead), never as a lead itself.
 MENU_CONFIDENCE_FLOOR = 0.8
 
 EQUIPMENT_WORDS = {
@@ -94,6 +95,23 @@ def fact_lines(observations: list[dict]) -> tuple[list[str], str]:
             lines.append(f"- LEAD: {line}")
         else:
             lines.append(f"- {line}")
+    dossier = latest.get("VENUE_DOSSIER")
+    if dossier and dossier.get("value_text"):
+        try:
+            import json as _json
+            d = _json.loads(dossier["value_text"])
+        except ValueError:
+            d = {}
+        if d.get("what_they_sell"):
+            lines.append(f"- From their own website: {d['what_they_sell']}")
+        for eq in (d.get("equipment") or [])[:2]:
+            lines.append(f"- Their site implies {EQUIPMENT_WORDS.get(eq.get('class'), eq.get('class'))} (\"{eq.get('evidence')}\").")
+        if d.get("proud_of"):
+            lines.append(f"- They clearly value: {d['proud_of']}")
+        if d.get("seasonal_note"):
+            lines.append(f"- Their site says: {d['seasonal_note']}")
+        if d.get("hook"):
+            lines.append(f"- A possible honest opening (rewrite in your own words): {d['hook']}")
     energy = latest.get("ENERGY_CLAIM")
     if energy and (energy.get("value_num") or 0) == 1:
         lines.append("- Their website talks about energy or sustainability (second-sentence angle: running cost, with the real figure from product_knowledge only).")

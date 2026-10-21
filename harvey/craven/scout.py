@@ -61,14 +61,17 @@ class CravenScout(Scout):
         for c in await self.companies_with_mailbox_and_no_prospect(self.batch):
             email = (c.get("mailbox") or "").strip().lower()
             try:
-                if not email or not compliance.is_role_address(email, role_parts):
+                ok = email and compliance.is_business_mailbox(
+                    email, c.get("name") or "", c.get("website") or "", role_parts)[0]
+                if not ok:
                     skipped += 1
                 elif await self.suppression.is_suppressed(email):
                     skipped += 1
                 elif await self.state.prospect_exists(email=email):
                     skipped += 1
                 else:
-                    result = await self._verify(email, self.env, role_parts)
+                    result = await self._verify(email, self.env, role_parts, venue_name=c.get("name") or "",
+                                                venue_website=c.get("website") or "")
                     if result.status == "invalid":
                         skipped += 1
                     else:

@@ -3,7 +3,8 @@
 Runs after Harvey's own deterministic gate, through ``Sender.extra_gates``.
 For a cold email (kind == "sequence") it refuses when:
 
-- the recipient is not a shared role mailbox (corporate-subscriber route);
+- the recipient is not the venue's own mailbox: a role local part, an address on
+  the venue's domain, or one named after the venue (Nick, 21 Oct 2026);
 - the recipient's address or domain is on the suppression list;
 - the suppression mirror is older than allowed (FAIL CLOSED: an unreadable
   list is not an empty list);
@@ -29,11 +30,12 @@ FOOTER_PREFIX = "Stop these emails: "
 
 
 class UKGate:
-    def __init__(self, *, settings, suppression, lawful_basis, secret: str):
+    def __init__(self, *, settings, suppression, lawful_basis, secret: str, state=None):
         self.settings = settings
         self.suppression = suppression
         self.lawful_basis = lawful_basis
         self.secret = secret
+        self.state = state   # to read the venue's name and website for the mailbox rule
 
     @property
     def tenant(self) -> str:
@@ -71,8 +73,19 @@ class UKGate:
         if item.get("kind") != "sequence":
             return GateResult(ok=not reasons, reasons=reasons)
 
-        if c.corporate_subscribers_only and not compliance.is_role_address(to_email, c.role_local_parts):
-            reasons.append(f"personal address blocked (not a role mailbox): {to_email}")
+        if c.corporate_subscribers_only:
+            name, website = "", ""
+            company_id = getattr(prospect, "company_id", "") if prospect is not None else ""
+            if company_id and self.state is not None:
+                try:
+                    company = await self.state.get_company(company_id)
+                    if company:
+                        name, website = company.name or "", company.website or ""
+                except Exception:
+                    pass
+            ok, why = compliance.is_business_mailbox(to_email, name, website, c.role_local_parts)
+            if not ok:
+                reasons.append(f"personal address blocked ({why}): {to_email}")
 
         if not c.lia_ref:
             reasons.append("no lawful basis configured (craven.compliance.lia_ref)")

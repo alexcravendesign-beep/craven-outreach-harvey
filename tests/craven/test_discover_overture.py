@@ -153,7 +153,7 @@ async def test_craven_scout_turns_role_mailboxes_into_nameless_prospects(state, 
     from tests.test_outbox_native import Cfg, Env, StubBrain
     scout = CravenScout(brain=StubBrain(), state=state, config=Cfg(), env=Env(), settings=settings)
 
-    async def fake_verify(email, env, role_parts):
+    async def fake_verify(email, env, role_parts, **_):
         return EmailResult(email=email, status="verified" if email.startswith("info@") else "guess")
     scout._verify = fake_verify
 

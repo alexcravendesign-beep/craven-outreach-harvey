@@ -11,12 +11,15 @@ from harvey.craven import compliance
 from harvey.integrations.email_finder import EmailResult, verify_published_address
 
 
-async def verify_role_email(email: str, env=None, role_local_parts=None) -> EmailResult:
+async def verify_role_email(email: str, env=None, role_local_parts=None, venue_name: str = "",
+                            venue_website: str = "") -> EmailResult:
     email = (email or "").strip().lower()
     if not email or "@" not in email:
         return EmailResult(email=email, status="invalid")
-    if not compliance.is_role_address(email, role_local_parts or compliance.DEFAULT_ROLE_LOCAL_PARTS):
-        return EmailResult(email=email, status="invalid")  # personal: never a cold-email target
+    ok, _ = compliance.is_business_mailbox(email, venue_name, venue_website,
+                                           role_local_parts or compliance.DEFAULT_ROLE_LOCAL_PARTS)
+    if not ok:
+        return EmailResult(email=email, status="invalid")  # a person's address: never a cold-email target
     try:
         status = await verify_published_address(email, env=env)
     except Exception:

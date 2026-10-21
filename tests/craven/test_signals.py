@@ -14,7 +14,7 @@ def test_catalogue_entries_are_well_formed_for_the_dashboard_and_the_free_sweep(
         assert sig["code"].isupper() and " " not in sig["code"]
         assert sig["category"] in DASHBOARD_CATEGORIES
         assert sig["value_type"] in {"num", "text", "bool"}
-        assert sig["collector"] in {"discover", "fhrs", "companies_house", "profile"}
+        assert sig["collector"] in {"discover", "fhrs", "companies_house", "profile", "dossier"}
         assert sig["cost_note"].lower().startswith("free"), sig["code"]
         assert len(sig["description"]) > 40
     assert "FHRS_AWAITING_INSPECTION" in CRAVEN_CODES and "MENU_EQUIPMENT_CLASS" in CRAVEN_CODES

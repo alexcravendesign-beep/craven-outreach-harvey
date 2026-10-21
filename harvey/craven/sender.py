@@ -42,7 +42,7 @@ class CravenSender(Sender):
         self.suppression = SuppressionStore(state, self.settings.tenant, self.supabase)
         self.lawful_basis = LawfulBasisStore(state, self.settings.tenant, self.supabase)
         self.uk_gate = UKGate(settings=self.settings, suppression=self.suppression,
-                              lawful_basis=self.lawful_basis,
+                              lawful_basis=self.lawful_basis, state=state,
                               secret=secret if secret is not None else unsubscribe_secret())
         self.extra_gates.append(self.uk_gate)
         self.body_finalizers.append(self.uk_gate.finalize_body)

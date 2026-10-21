@@ -166,6 +166,10 @@ CRAVEN_SIGNAL_CATALOG: list[dict] = [
     },
 ]
 
+# The model-read dossier (harvey.craven.dossier) is a signal too.
+from harvey.craven.dossier import DOSSIER_SIGNAL  # noqa: E402
+CRAVEN_SIGNAL_CATALOG.append(DOSSIER_SIGNAL)
+
 # Upstream signals Craven keeps (everything else in the US catalogue is
 # rejected once in the database; a rejection persists across upgrades).
 KEEP_UPSTREAM = ("NO_WEBSITE", "EMAIL_STATUS", "FOUND_IN_SERP")

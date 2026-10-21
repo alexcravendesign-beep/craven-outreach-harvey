@@ -131,6 +131,29 @@ def cmd_draft(args):
     asyncio.run(go())
 
 
+def cmd_scrape_mailboxes(args):
+    _, state, settings = _boot()
+
+    async def go():
+        from harvey.craven.mailbox_scrape import scrape_mailboxes
+        from harvey.craven.schema import ensure_schema
+        await state.init_db(); await ensure_schema(state)
+        print(await scrape_mailboxes(state, settings, limit=args.limit))
+    asyncio.run(go())
+
+
+def cmd_dossiers(args):
+    config, state, settings = _boot()
+
+    async def go():
+        from harvey.brain import Brain
+        from harvey.craven.dossier import build_dossiers
+        from harvey.craven.schema import ensure_schema
+        await state.init_db(); await ensure_schema(state)
+        print(await build_dossiers(state, Brain(state, config.brain), settings, limit=args.limit, max_percent=args.max_percent))
+    asyncio.run(go())
+
+
 def cmd_check(args):
     _, state, settings = _boot()
     from harvey.craven import compliance
@@ -173,6 +196,15 @@ def main(argv=None):
 
     sw = subs.add_parser("sweep-new-companies", help="new hospitality incorporations in the area (Companies House)")
     sw.set_defaults(func=cmd_sweep)
+
+    ms = subs.add_parser("scrape-mailboxes", help="find a venue's own mailbox on its website (free, no model)")
+    ms.add_argument("--limit", type=int, default=300)
+    ms.set_defaults(func=cmd_scrape_mailboxes)
+
+    do = subs.add_parser("dossiers", help="model-read venue dossiers (runs on your subscription; GUI session only)")
+    do.add_argument("--limit", type=int, default=100)
+    do.add_argument("--max-percent", type=float, default=50.0)
+    do.set_defaults(func=cmd_dossiers)
 
     dr = subs.add_parser("draft", help="write one grounded first email for a company into the Outbox (pending review; never sends)")
     dr.add_argument("--company", action="append", required=True, help="company id (repeatable)")
