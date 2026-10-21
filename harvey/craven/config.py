@@ -6,8 +6,6 @@ parsed by the plugin from the raw YAML mapping that load_plugins passes in.
 
 from pydantic import BaseModel, ValidationError
 
-from harvey.config import ConfigError
-
 
 class CravenComplianceConfig(BaseModel):
     # The signed LIA this tenant sends under (recorded by `harvey craven lia sign`).
@@ -51,6 +49,9 @@ class CravenConfig(BaseModel):
 
 
 def parse_craven_config(section: dict) -> CravenConfig:
+    # Imported here so the unsubscribe service can use this package without
+    # Harvey's full configuration module (and its dependencies).
+    from harvey.config import ConfigError
     if not isinstance(section, dict):
         raise ConfigError("'craven' in harvey.local.yaml must be a mapping.")
     try:
