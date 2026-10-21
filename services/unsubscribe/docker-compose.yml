@@ -1,0 +1,12 @@
+# Runs on PVE docker-main (VM 200) beside Supabase. Build from the repo root:
+#   docker compose -f services/unsubscribe/docker-compose.yml up -d --build
+services:
+  craven-unsubscribe:
+    build:
+      context: ../..
+      dockerfile: services/unsubscribe/Dockerfile
+    container_name: craven-unsubscribe
+    restart: unless-stopped
+    env_file: .env            # UNSUB_HMAC_SECRET, SUPABASE_URL, SUPABASE_SERVICE_KEY, CRAVEN_TENANT
+    ports:
+      - "192.168.1.150:8090:8090"  # LAN interface only: the cloudflared connector on LXC 101 reaches it; not tailnet, not public
