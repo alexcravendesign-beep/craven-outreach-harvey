@@ -104,7 +104,8 @@ class Prefetcher:
 
     def __init__(self, pages: VenuePages, websites: list[str], paths, ahead: int = 3, workers: int = 2):
         self.pages, self.websites, self.paths = pages, list(websites), tuple(paths)
-        self.ahead, self.workers = max(1, int(ahead)), max(1, min(int(workers), max(1, int(ahead))))
+        self.ahead = max(1, int(ahead))
+        self.workers = max(1, min(int(workers), self.ahead))
         self._slots = asyncio.Semaphore(self.ahead)
         self._next = 0
         self._futures: list[asyncio.Future] = []
@@ -122,6 +123,9 @@ class Prefetcher:
         for t in self._tasks:
             t.cancel()
         await asyncio.gather(*self._tasks, return_exceptions=True)
+        for f in self._futures:                 # a venue the consumer never reached: its error is not news
+            if f.done() and not f.cancelled():
+                f.exception()
 
     async def _worker(self):
         while True:
