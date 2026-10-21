@@ -15,10 +15,12 @@ from harvey.agents.writer import Writer
 logger = logging.getLogger("harvey.craven.writer")
 
 # Playbook lead order; the first present leads the email.
-LEAD_ORDER = ("FHRS_AWAITING_INSPECTION", "CH_NEW_INCORPORATION_DAYS", "CH_OFFICER_CHANGE_DAYS",
+# "Awaiting inspection" was dropped (Nick, 21 Oct 2026): a new registration
+# may be a new venue or new hands at an old one; too ambiguous to write from.
+LEAD_ORDER = ("CH_NEW_INCORPORATION_DAYS", "CH_OFFICER_CHANGE_DAYS",
               "FHRS_STRUCTURAL_SCORE", "FHRS_INSPECTION_AGE_DAYS", "MENU_EQUIPMENT_CLASS", "VENUE_CATEGORY")
 NEVER_IN_COPY = {"FHRS_HYGIENE_SCORE", "FHRS_MANAGEMENT_SCORE", "ROLE_MAILBOX", "INDEPENDENT_VENUE",
-                 "CH_INCORPORATED", "EMAIL_STATUS", "FOUND_IN_SERP"}
+                 "CH_INCORPORATED", "EMAIL_STATUS", "FOUND_IN_SERP", "FHRS_AWAITING_INSPECTION"}
 MENU_CONFIDENCE_FLOOR = 0.8
 
 EQUIPMENT_WORDS = {

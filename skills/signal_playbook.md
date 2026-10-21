@@ -29,26 +29,20 @@ examples here, not stock lines: use each at most once in a batch, if at all.
 
 When a venue has several, the first line uses the first match in this order:
 
-1. **FHRS_AWAITING_INSPECTION** — a new venue, fitting out now.
-2. **CH_NEW_INCORPORATION_DAYS** under 120 — same story from Companies House.
-3. **CH_OFFICER_CHANGE_DAYS** under 180 — new owner or manager, refit likely.
-4. **FHRS_STRUCTURAL_SCORE** of 10 or worse — condition of equipment.
-5. **FHRS_INSPECTION_AGE_DAYS** over 540 — inspection likely due.
-6. **MENU_EQUIPMENT_CLASS** — what their menu says they run.
-7. **VENUE_CATEGORY** alone — the kit a venue of that kind lives on.
+1. **CH_NEW_INCORPORATION_DAYS** under 120 — a new company behind the venue.
+2. **CH_OFFICER_CHANGE_DAYS** under 180 — new owner or manager, refit likely.
+3. **FHRS_STRUCTURAL_SCORE** of 10 or worse — condition of equipment.
+4. **FHRS_INSPECTION_AGE_DAYS** over 540 — inspection likely due.
+5. **MENU_EQUIPMENT_CLASS** — what their menu says they run.
+6. **VENUE_CATEGORY** alone — the kit a venue of that kind lives on.
+
+("Awaiting first inspection" is switched off: a new registration can be a new
+venue or new hands at an old one, and we will not guess which.)
 
 Everything else (ENERGY_CLAIM, FHRS_RATING of 5, FHRS_BUSINESS_TYPE) colours
 the second sentence or the follow-up; it does not lead.
 
 ## Signal → first line
-
-### FHRS_AWAITING_INSPECTION (new venue)
-The fit-out window: kit is being chosen this month.
-- **Angle:** get the chilled storage right before the inspector sees it.
-- **Good:** "Looks like {{company}} is opening soon — are you sorted for
-  fridges and the bottle cooler yet, or still pricing it up?"
-- **Avoid:** congratulations, "exciting times", anything about the inspection
-  being scary.
 
 ### CH_NEW_INCORPORATION_DAYS / CH_OFFICER_CHANGE_DAYS (new company or owner)
 - **Angle:** a new owner usually inherits someone else's fridges.

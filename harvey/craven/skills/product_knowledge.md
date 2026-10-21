@@ -4,6 +4,9 @@ Craven Cooling Services Ltd supplies, installs and services commercial refrigera
 
 Prices below are ex VAT, read live from the shop on 21 Oct 2026 (Store API). Quote a price only as "about £X" and only for the class the venue's signal points at. Running-cost figures use Craven's convention: kWh/year × £0.25 per unit (electricity at 25p). Every figure traces to the source in brackets; if a figure is not here, do not state it.
 
+## The range (one line in an email, never a list)
+Craven supplies the whole catering fit-out, not only refrigeration: cooking (ranges, fryers, tandoori ovens, charcoal grills), warewashing, prep machinery, tableware, cutlery, glassware. Refrigeration is the part Craven's own engineers install and service. The writer may say "and whatever else the kitchen needs, from the tandoor to the glassware" as a single aside once the lead point is made; the refrigeration classes below stay the lead because that is what the signals support.
+
 ## How to use this
 - The signal picks the class (see signal_playbook.md). One class per email. Never list the catalogue.
 - Email 1 names no product and no price. Email 2 may name one model and one price.

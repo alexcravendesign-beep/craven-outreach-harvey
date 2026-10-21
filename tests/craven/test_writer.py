@@ -22,9 +22,9 @@ def test_fact_lines_follow_the_playbook_order_and_hide_forbidden_codes():
         obs("ENERGY_CLAIM", num=1.0),
         obs("FHRS_RATING", num=5.0),
     ])
-    assert lead == "FHRS_AWAITING_INSPECTION"
-    assert lines[0].startswith("- LEAD:") and "first food hygiene inspection" in lines[0]
-    assert any("cake or patisserie display chiller" in l for l in lines)
+    assert lead == "MENU_EQUIPMENT_CLASS"                     # awaiting-inspection is off: never a lead, never in copy
+    assert lines[0].startswith("- LEAD:") and "cake or patisserie display chiller" in lines[0]
+    assert not any("inspection" in l.lower() for l in lines)
     assert any("a cafe" in l for l in lines)
     assert any("energy or sustainability" in l for l in lines)
     joined = "\n".join(lines)
@@ -83,10 +83,10 @@ async def test_craven_writer_prompt_carries_facts_date_showroom_and_structure(st
     writer = CravenWriter(brain, state, Cfg(), Env())
     writer.skills = "SKILLS"
     draft = await writer._write_personal_email(await state.get_prospect(pid))
-    assert draft["subject"] == "your cake counter" and draft["lead"] == "FHRS_AWAITING_INSPECTION"
+    assert draft["subject"] == "your cake counter" and draft["lead"] == "MENU_EQUIPMENT_CLASS"
     prompt = brain.prompts[-1]
     assert "PROMPT HERE" in prompt and "SKILLS" in prompt
-    assert "LEAD:" in prompt and "first food hygiene inspection" in prompt and "display chiller" in prompt
+    assert "LEAD:" in prompt and "display chiller" in prompt and "first food hygiene inspection" not in prompt
     assert "Today is" in prompt and "Carmarthen Road" in prompt and "Lisa" in prompt and "Kyle" in prompt
     assert "four parts" in prompt and "80 to 120 words" in prompt
     assert "Under 75 words" not in prompt and "No pitch" not in prompt          # upstream's email-1 rules are not used

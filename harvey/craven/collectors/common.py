@@ -7,7 +7,8 @@ from difflib import SequenceMatcher
 from harvey.craven.supabase import SupabaseRest
 
 STOPWORDS = {"the", "ltd", "limited", "llp", "plc", "and", "&", "of", "at", "co", "company", "bar", "cafe",
-             "café", "restaurant", "hotel", "inn", "pub", "kitchen", "takeaway", "coffee", "shop", "lounge"}
+             "café", "restaurant", "hotel", "inn", "pub", "kitchen", "takeaway", "coffee", "shop", "lounge",
+             "house", "arms", "grill", "chicken", "pizza", "indian", "chinese", "fish", "chips", "tap", "room", "old", "new"}
 
 
 def normalise_name(name: str) -> str:
@@ -29,11 +30,16 @@ def name_similarity(a: str, b: str) -> float:
         return 0.0
     ratio = SequenceMatcher(None, na, nb).ratio()
     ta, tb = name_tokens(a), name_tokens(b)
-    if ta and tb and (ta <= tb or tb <= ta):
-        ratio = max(ratio, 0.9)
+    if ta and tb and ta == tb:
+        ratio = max(ratio, 0.9)          # same distinctive words: a real match
+    elif ta and tb and (ta <= tb or tb <= ta) and min(len(ta), len(tb)) >= 2:
+        ratio = max(ratio, 0.9)          # two or more distinctive words contained in the other name
     elif ta and tb:
+        # a shared common word ("waterfront", "chicken", "mill") is not
+        # evidence on its own: partial overlap can never clear the floor
         overlap = len(ta & tb) / max(1, min(len(ta), len(tb)))
-        ratio = max(ratio, 0.6 + 0.3 * overlap) if overlap >= 0.5 else ratio
+        ratio = max(ratio, 0.5 + 0.3 * overlap) if overlap >= 0.5 else ratio
+        ratio = min(ratio, 0.84)
     return round(min(ratio, 1.0), 3)
 
 

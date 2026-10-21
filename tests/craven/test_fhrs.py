@@ -34,6 +34,11 @@ def test_name_similarity_is_forgiving_but_not_blind():
     assert name_similarity("The Swan", "The Swan Inn") >= 0.9
     assert name_similarity("Swan Inn", "The Swan Inn Ltd") >= 0.9
     assert name_similarity("The Swan", "Completely Different Trading Ltd") < 0.5
+    # one shared common word plus a postcode is not a match (the 21 Oct false positives)
+    assert name_similarity("Mex Chicken Peri Peri", "Morley's Chicken") < 0.85
+    assert name_similarity("The Waterfront Beefeater", "Rasoi Waterfront") < 0.85
+    assert name_similarity("The Mill House", "The Mill Cocktail Bar") < 0.85
+    assert name_similarity("Velvet Green Coffee", "Velvet Green Cafe") >= 0.85
     assert normalise_postcode("sa11aa") == "SA1 1AA" and normalise_postcode(" SA1  1AA ") == "SA1 1AA"
 
 

@@ -102,10 +102,11 @@ CRAVEN_SIGNAL_CATALOG: list[dict] = [
     },
     {
         "code": "FHRS_AWAITING_INSPECTION",
-        "label": "Awaiting first inspection",
+        "label": "Awaiting first inspection (off: ambiguous)",
         "description": (
-            "Registered with the council but not yet rated: a new venue, opening or "
-            "just opened. The fit-out window. The strongest trigger in the catalogue."
+            "Registered with the council but not yet rated. Means a NEW REGISTRATION, which "
+            "is a new venue OR new hands at an old one: too ambiguous to write from, so it "
+            "is rejected by default (Nick, 21 Oct 2026) and never appears in copy."
         ),
         "category": "profile", "value_type": "bool", "collector": "fhrs",
         "cost_note": "free (FHRS open data API)", "confidence_floor": 0.0,
