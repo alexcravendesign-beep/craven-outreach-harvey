@@ -68,7 +68,11 @@ def pre_send_check(
     if not EMAIL_RE.match(to_email):
         reasons.append(f"invalid recipient address '{to_email}'")
     if prospect is not None:
-        if (prospect.email or "").strip().lower() != to_email:
+        # A cold email goes only to the address on record. A reply answers
+        # whoever wrote to us, which may be a person's own address when the
+        # record holds a shared mailbox (info@); the handler sets it from the
+        # inbound message, so it is proven reachable.
+        if kind == "sequence" and (prospect.email or "").strip().lower() != to_email:
             reasons.append("recipient does not match the prospect record")
         allowed = DELIVERABLE_STATUSES if allow_risky else {"verified"}
         # Replies go back to someone who emailed US — deliverability proven.

@@ -300,8 +300,19 @@ class Handler:
         reply_meta: dict | None = None,
     ):
         """Classify, record, and respond to a single reply."""
-        # Find the prospect by email (indexed lookup)
+        # Find the prospect by email (indexed lookup). A reply to a shared
+        # mailbox (info@) often comes from a person's own address: fall back
+        # to the email it answers, which we sent and recorded in the outbox.
         prospect = await self.state.get_prospect_by_email(lead_email)
+        in_reply_to = (reply_meta or {}).get("in_reply_to", "")
+        if not prospect and in_reply_to:
+            sent_item = await self.state.find_outbox_by_message_id(in_reply_to)
+            if sent_item and sent_item.get("prospect_id"):
+                prospect = await self.state.get_prospect(sent_item["prospect_id"])
+                if prospect:
+                    logger.info(
+                        f"Handler: {lead_email} answered our email to {prospect.email}; "
+                        "treating it as that prospect's reply.")
         if not prospect:
             logger.warning(f"Handler: No prospect found for {lead_email}")
             return
@@ -522,6 +533,8 @@ class Handler:
                         reply_meta={
                             "thread_ref": msg.thread_ref,
                             "message_id": msg.message_id,
+                            "in_reply_to": msg.in_reply_to,
+                            "from_email": msg.from_email,
                             "subject": msg.subject,
                         },
                     )
@@ -601,11 +614,13 @@ class Handler:
         if subject and not subject.lower().startswith("re:"):
             subject = f"Re: {subject}"
 
+        # Answer the person who wrote, not the shared mailbox we first emailed.
+        reply_to = (reply_meta.get("from_email") or "").strip().lower() or prospect.email
         item_id = await self.state.add_outbox_item(
             prospect_id=prospect.id,
             conversation_id=convo.id,
             kind="reply",
-            to_email=prospect.email,
+            to_email=reply_to,
             subject=subject or "Re: your note",
             body=response,
             send_at=datetime.now(timezone.utc).replace(tzinfo=None).isoformat(),

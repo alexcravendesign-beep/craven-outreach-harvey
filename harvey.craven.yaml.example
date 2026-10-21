@@ -1,0 +1,93 @@
+# Craven Cooling's Harvey configuration — copy to harvey.local.yaml (gitignored;
+# it wins over harvey.yaml) and fill in the blanks. Nothing here sends mail:
+# channels.email.provider stays unset until the mailbox decision (milestone 3)
+# and require_approval stays true. See ../BRIEF.md and ../TASKS.md.
+
+plugins: [harvey.craven]
+
+persona:
+  name: "Alex Craven"
+  company: "Craven Cooling"
+  role: "AI assistant to the Craven Cooling sales team"   # openly AI: say so if asked, always
+  email: ""                                                # the dedicated-domain mailbox, set at M3
+  linkedin: ""
+  tone: "plain, warm, Yorkshire-practical; British English; never salesy"
+
+product:
+  name: "Craven Cooling commercial refrigeration"
+  description: >
+    Supply, installation and service of commercial refrigeration for UK hospitality
+    and food retail: bottle coolers, undercounter and upright fridges and freezers,
+    serve-over and patisserie displays, blast chillers, cold rooms. Tefcold family
+    stockist (TEFCOLD, Serrco, G-Line, ISA, Elcold, Framec, Elstar). Showroom in Skipton.
+  pricing: "Quoted per unit; finance available; prices stated inline in the email, never behind a link"
+  key_benefits:
+    - "Right-sized kit for the actual menu, not a catalogue dump"
+    - "R290 running-cost numbers you can check"
+    - "Local engineers; service after the sale"
+  objection_responses:
+    "we have a supplier": "Fair enough. If a unit ever lets you down on a Friday night, keep our number."
+    "no budget": "Understood. When the next one dies, a 15-minute call beats an emergency buy."
+  offer:
+    primary: ""
+    entry: "A quick look at what you're running and what it costs to run"
+    goal: "get_reply"
+    booking_method: "ask_preference"
+    meeting_duration: "15 minutes"
+    meeting_owner: ""                                      # the named human who takes the call
+
+icp:
+  industries: [pub, cafe, restaurant, hotel, fast_food, butcher, farm_shop, convenience, deli, bakery]
+  company_size: "1-3 sites"
+  titles: ["Owner", "Licensee", "General Manager", "Head Chef"]
+  geography: ["BD23", "BD24", "LS29"]                      # outcode prefixes; the Skipton bake-off box first
+  hiring_signals: []
+
+channels:
+  email:
+    enabled: true
+    provider: ""                                           # gmail | microsoft | smtp — decided at M3
+    max_daily_sends: 50                                    # ceiling; the warmup ramp sets the real cold cap
+    require_approval: true
+    send_to_risky: false
+    max_bounce_rate: 0.03
+    warmup:
+      start_date: ""                                       # set the day the sending domain goes live
+      min_days: 14
+      start_sends: 5
+      daily_increase: 3
+  linkedin:
+    enabled: false
+
+usage:
+  max_daily_claude_percent: 50
+  heartbeat_interval_minutes: 30
+  quiet_hours:
+    start: "17:30"
+    end: "08:30"
+    timezone: "Europe/London"
+
+compliance:
+  postal_address: ""                                       # Craven Cooling Sales Ltd registered office, set at M8
+  precleared:
+    enabled: false                                         # optional belt-and-braces at M8 (sender_country: GB)
+
+# The plugin's own section (parsed by harvey.craven.config; HarveyConfig ignores it).
+craven:
+  tenant: craven
+  compliance:
+    lia_ref: ""                                            # set by `harvey craven lia sign` (M1)
+    corporate_subscribers_only: true
+    unsubscribe_base_url: ""                               # public URL of the unsubscribe service (M2)
+    max_mirror_age_hours: 24
+    sender_legal_name: "Craven Cooling Sales Ltd"
+    company_number: ""
+  deliverability:
+    sending_domain: ""                                     # decided at M3; never the main domain
+    send_days: [0, 1, 2, 3, 4]
+    send_hours: ["09:30", "16:30"]
+    timezone: "Europe/London"
+  discovery:
+    source: supabase                                       # supabase | parquet
+    parquet_path: ""
+    chain_domain_threshold: 2

@@ -1,6 +1,7 @@
 """Configuration loader for Harvey. Reads harvey.yaml + .env."""
 
 import logging
+import importlib
 import os
 import re
 from datetime import date as _date, time as _time
@@ -498,6 +499,43 @@ class HarveyConfig(BaseModel):
     brain: BrainConfig = BrainConfig()
     compliance: ComplianceConfig = ComplianceConfig()
     writer: WriterConfig = WriterConfig()
+    # Extension modules loaded after the config is read (see load_plugins).
+    # Each names an importable module with an ``install(config, raw)``
+    # function; a fork keeps its additions out of Harvey's core this way.
+    plugins: list[str] = []
+
+
+_INSTALLED_PLUGINS: set[str] = set()
+
+
+def load_plugins(config: "HarveyConfig", raw: dict | None = None) -> list[str]:
+    """Import each ``plugins:`` module and call its ``install(config, raw)``.
+
+    ``raw`` is the whole YAML mapping, so a plugin can read its own
+    top-level section (unknown keys are ignored by HarveyConfig itself).
+    Idempotent per process: a module is installed once however many times
+    the config is loaded (the dashboard loads it per request). A plugin
+    that fails to import or install raises ConfigError, never a silent skip.
+    """
+    loaded = []
+    for name in config.plugins:
+        if name in _INSTALLED_PLUGINS:
+            loaded.append(name)
+            continue
+        try:
+            module = importlib.import_module(name)
+            install = getattr(module, "install", None)
+            if install is None:
+                raise ConfigError(f"plugin '{name}' has no install(config, raw) function")
+            install(config, raw or {})
+        except ConfigError:
+            raise
+        except Exception as e:
+            raise ConfigError(f"plugin '{name}' failed to load: {type(e).__name__}: {e}")
+        _INSTALLED_PLUGINS.add(name)
+        loaded.append(name)
+        logger.info(f"Plugin loaded: {name}")
+    return loaded
 
 
 class EnvConfig(BaseModel):
@@ -568,7 +606,7 @@ def load_config(config_path: str | None = None) -> HarveyConfig:
         )
 
     try:
-        return HarveyConfig(**data)
+        config = HarveyConfig(**data)
     except ValidationError as e:
         # Log a friendly, actionable summary, then re-raise the original
         # ValidationError so callers (and tests) keep the pydantic type.
@@ -577,6 +615,8 @@ def load_config(config_path: str | None = None) -> HarveyConfig:
             "Fix the fields above or re-run 'harvey setup'."
         )
         raise
+    load_plugins(config, data)
+    return config
 
 
 def load_brain_config(config_path: str | None = None) -> BrainConfig:

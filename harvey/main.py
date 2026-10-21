@@ -44,6 +44,10 @@ QUIET_HOURS_POLL_SECONDS = 300
 # Phase-1 tasks that read replies; sending waits for all of them to succeed.
 REPLY_READERS = ("handle_replies", "read_replies")
 
+# Agent classes a plugin substitutes for the defaults, by role name
+# ("scout" | "writer" | "sender" | "handler"). Filled by a plugin's install().
+AGENT_OVERRIDES: dict[str, type] = {}
+
 
 def in_quiet_hours(config: HarveyConfig) -> bool:
     """Check if we're currently in quiet hours."""
@@ -237,10 +241,12 @@ async def heartbeat(stop_event: asyncio.Event | None = None):
     from harvey.agents.handler import Handler
     from harvey.agents.analyst import Analyst
 
-    scout = Scout(brain, state, config, env)
-    writer = Writer(brain, state, config, env)
-    sender = Sender(brain, state, config, env)
-    handler = Handler(brain, state, config, env)
+    agents = {"scout": Scout, "writer": Writer, "sender": Sender, "handler": Handler}
+    agents.update(AGENT_OVERRIDES)  # a plugin may subclass any of the four
+    scout = agents["scout"](brain, state, config, env)
+    writer = agents["writer"](brain, state, config, env)
+    sender = agents["sender"](brain, state, config, env)
+    handler = agents["handler"](brain, state, config, env)
     analyst = Analyst(state)
 
     interval = config.usage.heartbeat_interval_minutes * 60

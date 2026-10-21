@@ -1,3 +1,10 @@
+> **This is Craven Cooling's fork of Harvey** (`alexcravendesign-beep/craven-outreach-harvey`,
+> branch `craven`). It sells commercial refrigeration to UK hospitality, under UK PECR/GDPR.
+> Everything Craven-specific lives in `harvey/craven/` and loads through `plugins: [harvey.craven]`
+> in `harvey.local.yaml` (start from `harvey.craven.yaml.example`). Project memory (brief, tasks,
+> log) lives one level up in the scaffold folder. Nothing sends until a human arms it: see the
+> arming checklist in TASKS.md. The guide below is upstream Harvey's setup wizard, kept as-is.
+
 # Harvey — Autonomous AI Sales Agent
 
 Harvey is an autonomous sales agent powered by Claude Code. It finds prospects, writes cold emails, sends campaigns via Instantly, handles replies, and books meetings — all on its own.

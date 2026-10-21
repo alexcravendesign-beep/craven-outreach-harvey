@@ -76,6 +76,16 @@ class Sender:
         self.precleared = PreclearedClient.from_config(config, env)
         # Disabled in tests to skip inter-send sleeps.
         self.send_pacing = True
+        # Plugin hooks. extra_gates: ``async (item, prospect, body) -> GateResult
+        # | None`` run after the built-in gate; any refusal blocks the send
+        # with its reasons. body_finalizers: ``(body, item) -> body`` applied
+        # to the exact text that goes out, after the footer (a plugin's own
+        # footer line; the gate sees the finished body too). cold_send_window:
+        # ``() -> bool``; when False, cold emails wait this cycle and replies
+        # still go out (quiet hours have no weekday notion).
+        self.extra_gates: list = []
+        self.body_finalizers: list = []
+        self.cold_send_window = None
 
     @property
     def is_native(self) -> bool:
@@ -466,8 +476,12 @@ class Sender:
     def _outgoing_body(self, item: dict) -> str:
         """The exact body that goes out: cold email gets the footer, replies don't."""
         if item["kind"] == "sequence":
-            return self._with_footer(item["body"])
-        return item["body"]
+            body = self._with_footer(item["body"])
+        else:
+            body = item["body"]
+        for finalize in self.body_finalizers:
+            body = finalize(body, item)
+        return body
 
     async def _follow_up_order(self, item: dict) -> str | tuple[str, str] | None:
         """For a follow-up: "wait" until the email before it went out and its
@@ -524,8 +538,9 @@ class Sender:
             # A first email to someone already contacted is always a duplicate.
             if item["step"] == 1 and prospect.status == "contacted":
                 return "cancelled", "already contacted"
+        body = self._outgoing_body(item)
         gate = pre_send_check(
-            item["to_email"], item["subject"], self._outgoing_body(item),
+            item["to_email"], item["subject"], body,
             prospect=prospect, allow_risky=allow_risky, kind=item["kind"],
             postal_address=compliance_of(self.config).postal_address,
         )
@@ -535,6 +550,14 @@ class Sender:
                 f"{gate.reasons}"
             )
             return "failed", "gate: " + "; ".join(gate.reasons)[:300]
+        for extra_gate in self.extra_gates:
+            verdict = await extra_gate(item, prospect, body)
+            if verdict is not None and not verdict:
+                logger.warning(
+                    f"Sender: gate blocked email to {item['to_email']}: "
+                    f"{verdict.reasons}"
+                )
+                return "failed", "gate: " + "; ".join(verdict.reasons)[:300]
         return None
 
     async def _drain_due(self):
@@ -591,10 +614,11 @@ class Sender:
         # cold emails wait for a later cycle, replies still go out.
         compliance_paused = False
         held_cold = 0
+        cold_window_open = self.cold_send_window() if self.cold_send_window else True
         for item in due:
             if sent >= budget:
                 break
-            if item["kind"] == "sequence" and sent_cold >= cold_left:
+            if item["kind"] == "sequence" and (sent_cold >= cold_left or not cold_window_open):
                 held_cold += 1
                 continue
             needs_check = self.precleared is not None and item["kind"] == "sequence"

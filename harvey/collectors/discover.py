@@ -322,6 +322,10 @@ class Business:
     source_url: str = ""
     provider: str = ""
     raw_title: str = ""             # SERP evidence for junk filtering before normalization
+    # Extra facts a provider already knows (e.g. an owned dataset's role
+    # mailbox): observation rows minus company_id/run_id, which _observations
+    # fills in. Only confirmed signal codes are recorded.
+    observations: list[dict] = field(default_factory=list)
 
     def identity(self) -> str:
         return self.domain or self.external_id
@@ -990,6 +994,14 @@ def _observations(biz: Business, company_id: str, confirmed: set[str],
         add("REVIEW_RATING", num=float(biz.rating))
     if biz.review_count is not None:
         add("REVIEW_COUNT", num=float(biz.review_count))
+    for extra in biz.observations:
+        if extra.get("signal_code") in confirmed:
+            rows.append({
+                "company_id": company_id, "collector": "discover",
+                "value_num": None, "value_text": "", "confidence": 1.0,
+                "evidence_url": biz.source_url, "run_id": run_id,
+                **extra,
+            })
     return rows
 
 

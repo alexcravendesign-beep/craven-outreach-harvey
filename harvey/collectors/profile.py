@@ -556,6 +556,10 @@ class ProfileCollector:
         return total
 
 
+# The collector profile_companies runs; a plugin may point this at a subclass.
+COLLECTOR_CLASS: type = ProfileCollector
+
+
 async def profile_companies(state, companies: list[dict]) -> tuple[int, str]:
     """Convenience entry point: opens a run, profiles, closes the run."""
     from harvey.signals import seed_signal_catalog
@@ -569,7 +573,7 @@ async def profile_companies(state, companies: list[dict]) -> tuple[int, str]:
         return 0, ""
     run_id = await state.start_run("profile", provider="http")
     try:
-        async with ProfileCollector(state, confirmed) as collector:
+        async with COLLECTOR_CLASS(state, confirmed) as collector:
             n = await collector.run(companies, run_id=run_id)
         await state.finish_run(run_id, records=n, cost_usd=0.0)
         return n, run_id
