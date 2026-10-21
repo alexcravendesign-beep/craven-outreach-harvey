@@ -60,6 +60,7 @@ def test_booking_platforms_are_not_a_venues_website():
     assert website_kind("https://theswan.pub") == "own"
 
 
+@pytest.mark.asyncio
 async def test_run_skips_venues_that_already_have_a_dossier_and_rotates_them_out(state, monkeypatch, caplog):
     from harvey.craven.schema import ensure_schema
     await ensure_schema(state)
