@@ -29,12 +29,18 @@ examples here, not stock lines: use each at most once in a batch, if at all.
 
 When a venue has several, the first line uses the first match in this order:
 
-1. **CH_NEW_INCORPORATION_DAYS** under 120 — a new company behind the venue.
-2. **CH_OFFICER_CHANGE_DAYS** under 180 — new owner or manager, refit likely.
-3. **FHRS_STRUCTURAL_SCORE** of 10 or worse — condition of equipment.
-4. **FHRS_INSPECTION_AGE_DAYS** over 540 — inspection likely due.
-5. **MENU_EQUIPMENT_CLASS** — what their menu says they run.
-6. **VENUE_CATEGORY** alone — the kit a venue of that kind lives on.
+1. **NEW_PREMISES_LICENCE_APPLICATION** (current) — a new premises licence
+   applied for: opening, or a new operator, weeks away.
+2. **PLANNING_CHANGE_OF_USE** (within a year) — a new food or drink venue in
+   planning.
+3. **LICENCE_VARIATION** (current) — longer hours, a bigger area or a kitchen.
+4. **PLANNING_REFIT** (within a year) — works at an existing venue.
+5. **CH_NEW_INCORPORATION_DAYS** under 120 — a new company behind the venue.
+6. **CH_OFFICER_CHANGE_DAYS** under 180 — new owner or manager, refit likely.
+7. **FHRS_STRUCTURAL_SCORE** of 10 or worse — condition of equipment.
+8. **FHRS_INSPECTION_AGE_DAYS** over 540 — inspection likely due.
+9. **MENU_EQUIPMENT_CLASS** — what their menu says they run.
+10. **VENUE_CATEGORY** alone — the kit a venue of that kind lives on.
 
 ("Awaiting first inspection" is switched off: a new registration can be a new
 venue or new hands at an old one, and we will not guess which.)
@@ -43,6 +49,49 @@ Everything else (ENERGY_CLAIM, FHRS_RATING of 5, FHRS_BUSINESS_TYPE) colours
 the second sentence or the follow-up; it does not lead.
 
 ## Signal → first line
+
+### NEW_PREMISES_LICENCE_APPLICATION (a new premises licence applied for)
+The council has published their application for a new licence to sell
+alcohol, serve late food or put on entertainment. That happens weeks before a
+venue opens, or when a new operator takes over. The notice is on the door and
+in the paper, so anyone could have seen it.
+- **Angle:** opening weeks away; the kit is being chosen now.
+- **Good:** "Looks like {{company}} is getting ready to open. If the chilled
+  kit isn't ordered yet, the showroom on Carmarthen Road has the Tefcold
+  range on the floor and Lisa prices it the same day."
+- **Never** say "licence", "application", "the council" or "representations".
+  Never guess the opening date. If the venue is a shop (off-licence) rather
+  than somewhere that serves, the angle is the drinks chiller, not a kitchen.
+
+### PLANNING_CHANGE_OF_USE (a new venue in planning)
+A planning application to turn premises into a cafe, restaurant, takeaway,
+bar, pub or hotel, or to build one. Months before opening; the fit-out is
+being costed now. The venue may have no name yet, so the email goes to the
+applicant's or the premises' mailbox when one exists.
+- **Angle:** help with the plan: what a venue like that needs, with prices.
+- **Good:** "Looks like a new {{proposed use}} is coming to {{street}}. Before
+  the fit-out's costed, worth knowing what the chilled kit comes to: we can
+  put a priced list together from the plan, no visit needed."
+- **Never** cite the planning application, the reference or the agent.
+
+### LICENCE_VARIATION (extending hours, area or a kitchen)
+An application to change an existing licence: later hours, outdoor areas,
+late-night food. More trade through the same fridges, or a kitchen that did
+not exist before.
+- **Angle:** is the chilled kit sized for the extra trade.
+- **Good:** "Looks like you're stretching the hours at {{company}}. Longer
+  nights are hard on bottle coolers; if any of yours is struggling, Kyle can
+  look before the busy weeks."
+- **Never** mention the licence, the variation or the council.
+
+### PLANNING_REFIT (works at an existing venue)
+An extension, refurbishment, extraction, servery, terrace or bar at a pub,
+restaurant, cafe, hotel, takeaway or club.
+- **Angle:** tired kit gets replaced during a refit; time it with the works.
+- **Good:** "Looks like you've got work planned at {{company}}. If the fridges
+  are coming out while the builders are in, that's the cheap moment to swap
+  anything tired; happy to price it from a photo."
+- **Never** cite the planning application.
 
 ### CH_NEW_INCORPORATION_DAYS / CH_OFFICER_CHANGE_DAYS (new company or owner)
 - **Angle:** a new owner usually inherits someone else's fridges.

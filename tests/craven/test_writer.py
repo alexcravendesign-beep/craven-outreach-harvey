@@ -114,3 +114,26 @@ async def test_draft_one_stages_a_pending_review_row_even_for_a_guess_address(st
     item = await state.get_outbox_item(out["outbox_id"])
     assert item["status"] == "pending_review" and item["kind"] == "sequence" and item["to_email"] == "info@theswan.pub"
     assert await draft_one(state, RecordingBrain(), Cfg(), Env(), "nope") is None
+
+
+def test_council_applications_lead_while_fresh_and_never_cite_the_source():
+    lines, lead = fact_lines([
+        obs("CH_NEW_INCORPORATION_DAYS", num=30.0),
+        obs("PLANNING_REFIT", text="Rear extension to form a bigger kitchen (application dated 2026-09-01)"),
+        obs("NEW_PREMISES_LICENCE_APPLICATION", num=1.0,
+            text="new premises licence (closing date for representations 2026-11-11; Late Night Refreshment)"),
+        obs("VENUE_CATEGORY", text="takeaway"),
+    ])
+    assert lead == "NEW_PREMISES_LICENCE_APPLICATION"
+    assert "getting ready to open" in lines[0] and "never mention the council" in lines[0]
+    assert "Rear extension" in lines[1] and "30 days ago" in lines[2]
+    # a licence notice seen four months ago is no longer a reason to write today
+    lines, lead = fact_lines([
+        obs("NEW_PREMISES_LICENCE_APPLICATION", num=1.0, text="new premises licence", at="2026-05-01T10:00:00"),
+        obs("PLANNING_CHANGE_OF_USE", text="a daytime café (application dated 2026-09-25)"),
+    ])
+    assert lead == "PLANNING_CHANGE_OF_USE" and "a daytime café" in lines[0] and len(lines) == 1
+    # and a variation leads only with something to say
+    assert fact_lines([obs("LICENCE_VARIATION", text="")]) == ([], "")
+    lines, lead = fact_lines([obs("LICENCE_VARIATION", text="Late night refreshment until 02:00 (variation; closing date for representations 2026-11-10)")])
+    assert lead == "LICENCE_VARIATION" and "Late night refreshment until 02:00" in lines[0]

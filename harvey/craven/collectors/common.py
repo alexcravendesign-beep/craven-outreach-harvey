@@ -156,3 +156,105 @@ def days_since(date_text: str) -> int | None:
     if d.year < 1950:
         return None
     return max(0, (datetime.now(timezone.utc) - d).days)
+
+
+# ── Shared by the licensing and planning collectors ──
+
+POSTCODE_RE = re.compile(r"\b([A-Z]{1,2}\d[A-Z\d]?)\s*(\d[A-Z]{2})\b")
+STREET_TOKENS = {"road", "street", "lane", "avenue", "close", "crescent", "square", "place", "terrace", "way",
+                 "drive", "park", "hill", "heol", "stryd", "ffordd", "high", "main", "north", "south", "east", "west",
+                 "swansea", "neath", "llanelli", "bridgend", "porthcawl", "carmarthen", "ammanford", "gorseinon",
+                 "mumbles", "morriston", "sketty", "killay", "uplands", "maesteg", "pontardawe", "port", "talbot"}
+
+
+def find_postcode(text: str) -> str:
+    """The last full UK postcode in a piece of text, normalised; '' if none."""
+    hits = POSTCODE_RE.findall((text or "").upper())
+    return f"{hits[-1][0]} {hits[-1][1]}" if hits else ""
+
+
+def outcode(postcode: str) -> str:
+    pc = normalise_postcode(postcode)
+    return pc.split(" ")[0] if pc else ""
+
+
+def slugify(text: str, limit: int = 60) -> str:
+    s = re.sub(r"[^a-z0-9]+", "-", (text or "").lower()).strip("-")
+    return s[:limit].rstrip("-")
+
+
+def parse_uk_date(text: str) -> str:
+    """'11/11/2026' or '29 October 2026' -> '2026-11-11'; '' when unreadable."""
+    t = (text or "").strip()
+    m = re.search(r"(\d{1,2})/(\d{1,2})/(\d{4})", t)
+    if m:
+        d, mo, y = (int(x) for x in m.groups())
+        return f"{y:04d}-{mo:02d}-{d:02d}" if 1 <= mo <= 12 and 1 <= d <= 31 else ""
+    m = re.search(r"(\d{1,2})(?:st|nd|rd|th)?\s+([A-Za-z]+)\s+(\d{4})", t)
+    if m:
+        months = ("january", "february", "march", "april", "may", "june", "july", "august",
+                  "september", "october", "november", "december")
+        name = m.group(2).lower()
+        for i, mn in enumerate(months, 1):
+            if mn.startswith(name[:3]):
+                return f"{int(m.group(3)):04d}-{i:02d}-{int(m.group(1)):02d}"
+    return ""
+
+
+async def pois_by_postcodes(supabase: SupabaseRest | None, postcodes: list[str]) -> dict[str, list[dict]]:
+    """The owned pois rows at each full postcode (normalised key), for
+    matching a council record to venues we already know."""
+    if supabase is None or not postcodes:
+        return {}
+    wanted = sorted({normalise_postcode(p) for p in postcodes if normalise_postcode(p)})
+    out: dict[str, list[dict]] = {}
+    for i in range(0, len(wanted), 100):
+        chunk = wanted[i:i + 100]
+        rows = await supabase.select("pois", {"select": "id,name,postcode,address,locality",
+                                              "postcode": "in.(" + ",".join(f'"{p}"' for p in chunk) + ")"})
+        for r in rows:
+            out.setdefault(normalise_postcode(r.get("postcode") or ""), []).append(r)
+    return out
+
+
+def best_poi_by_name(premises_name: str, pois: list[dict], floor: float = 0.85) -> tuple[dict | None, float]:
+    """The poi at this postcode whose name is this premises (FHRS rule: name
+    similarity at the same full postcode, one shared common word is never
+    enough). Ties below a clear winner return nothing."""
+    if not premises_name:
+        return None, 0.0
+    scored = sorted(((name_similarity(premises_name, p.get("name") or ""), p) for p in pois),
+                    key=lambda x: x[0], reverse=True)
+    if not scored or scored[0][0] < floor:
+        return None, scored[0][0] if scored else 0.0
+    if len(scored) > 1 and scored[1][0] >= floor and scored[1][0] == scored[0][0]:
+        return None, scored[0][0]           # two venues equally likely: do not guess
+    return scored[0][1], scored[0][0]
+
+
+def best_poi_in_text(text: str, pois: list[dict]) -> tuple[dict | None, float]:
+    """For records with no separate premises name (planning: the venue name
+    is fused into the address). A poi matches when all its distinctive name
+    tokens appear in the text; a single token must be four letters or more
+    and lead the text. Confidence 0.92 for two or more tokens, 0.86 for one."""
+    words = normalise_name(text).split()
+    present = set(words)
+    best, conf = None, 0.0
+    for p in pois:
+        # a venue named after its street ("Gower Road Cafe") must not match
+        # every application on that street at the postcode
+        toks = name_tokens(p.get("name") or "") - STREET_TOKENS
+        if not toks or not toks <= present:
+            continue
+        if len(toks) >= 2:
+            score = 0.92
+        else:
+            tok = next(iter(toks))
+            if len(tok) < 4 or not words or words[0] != tok:
+                continue
+            score = 0.86
+        if score > conf:
+            best, conf = p, score
+        elif score == conf:
+            best = None                      # ambiguous between two venues
+    return best, conf

@@ -5,6 +5,8 @@ import logging
 
 from harvey.craven.collectors.companies_house import enrich_companies_house
 from harvey.craven.collectors.fhrs import enrich_fhrs
+from harvey.craven.collectors.licensing import enrich_licensing
+from harvey.craven.collectors.planning import enrich_planning
 from harvey.craven.schema import ensure_schema
 from harvey.craven.supabase import SupabaseRest
 
@@ -25,6 +27,16 @@ async def enrichment_cycle(state, config, *, settings=None, batch: int = 50) -> 
         out["companies_house"] = await enrich_companies_house(state, settings, sb, limit=min(batch, 40))
     except Exception as e:
         logger.error(f"Companies House enrichment failed this cycle: {e}")
+    # Council sources: one list page per council and one PlanIt call per
+    # area, each cached for a day, so a cycle costs the councils nothing new.
+    try:
+        out["licensing"] = await enrich_licensing(state, settings, sb)
+    except Exception as e:
+        logger.error(f"Licensing notices failed this cycle: {e}")
+    try:
+        out["planning"] = await enrich_planning(state, settings, sb)
+    except Exception as e:
+        logger.error(f"Planning applications failed this cycle: {e}")
     return out
 
 

@@ -1,0 +1,565 @@
+{
+ "Swansea": {
+  "from": 0,
+  "to": 9,
+  "total": 9,
+  "records": [
+   {
+    "name": "Swansea/2026/1729/FUL",
+    "uid": "2026/1729/FUL",
+    "reference": null,
+    "area_name": "Swansea",
+    "area_id": 407,
+    "start_date": "2026-10-19",
+    "decided_date": null,
+    "app_type": "Full",
+    "app_state": "Undecided",
+    "app_size": "Small",
+    "description": "Demolition of existing kitchen extension, part demolition of the existing garage & proposed single storey rear / side extensions.",
+    "address": "10 Castle Avenue Mumbles Swansea SA3 4BA",
+    "postcode": "SA3 4BA",
+    "link": "https://www.planit.org.uk/planapplic/Swansea/2026/1729/FUL/",
+    "url": "https://property.swansea.gov.uk/online-applications/applicationDetails.do?keyVal=TN54RSEVKHQ00&activeTab=summary",
+    "last_changed": "2026-10-21T08:27:18.159672",
+    "other_fields": {
+     "applicant_name": "See source",
+     "date_received": "2026-10-19"
+    }
+   },
+   {
+    "name": "Swansea/2026/1681/DOC",
+    "uid": "2026/1681/DOC",
+    "reference": null,
+    "area_name": "Swansea",
+    "area_id": 407,
+    "start_date": "2026-10-12",
+    "decided_date": null,
+    "app_type": "Conditions",
+    "app_state": "Undecided",
+    "app_size": "Small",
+    "description": "Change of use of first floor to provide 16 bedroom student acccommodation - Discharge of condition 3 (Noise Impact Assessment), 4 , 5 (Sound energy) and 8 (Construction Method Statement) of Planning Permission 2022/1490/FUL granted 17th November 2023.",
+    "address": "61 Plymouth Street City Centre Swansea SA1 3QQ",
+    "postcode": "SA1 3QQ",
+    "link": "https://www.planit.org.uk/planapplic/Swansea/2026/1681/DOC/",
+    "url": "https://property.swansea.gov.uk/online-applications/applicationDetails.do?activeTab=summary&keyVal=TMSMPSEVK4700",
+    "last_changed": "2026-10-20T08:32:07.994277",
+    "other_fields": {
+     "applicant_name": "See source",
+     "date_received": "2026-10-12"
+    }
+   },
+   {
+    "name": "Swansea/2026/1653/FUL",
+    "uid": "2026/1653/FUL",
+    "reference": null,
+    "area_name": "Swansea",
+    "area_id": 407,
+    "start_date": "2026-10-07",
+    "decided_date": null,
+    "app_type": "Full",
+    "app_state": "Undecided",
+    "app_size": "Small",
+    "description": "Two storey part single storey side extension to facilitate the change of use of the former public house (Class A3) and 1st floor flat (Class C3) to 5 flats (Class C3).",
+    "address": "Morris Arms Llangyfelach Road Treboeth Swansea SA5 9LN",
+    "postcode": "SA5 9LN",
+    "link": "https://www.planit.org.uk/planapplic/Swansea/2026/1653/FUL/",
+    "url": "https://property.swansea.gov.uk/online-applications/applicationDetails.do?activeTab=summary&keyVal=TMJRYTEVJVT00",
+    "last_changed": "2026-10-21T08:27:18.108509",
+    "other_fields": {
+     "applicant_name": "See source",
+     "date_received": "2026-10-07"
+    }
+   },
+   {
+    "name": "Swansea/2026/1564/FUL",
+    "uid": "2026/1564/FUL",
+    "reference": null,
+    "area_name": "Swansea",
+    "area_id": 407,
+    "start_date": "2026-09-25",
+    "decided_date": null,
+    "app_type": "Full",
+    "app_state": "Undecided",
+    "app_size": "Small",
+    "description": "Change of use of the ground floor from a shop (Class A1) to a daytime caf\u00e9 (Class A3), with installation of a kitchen extract duct on the rear elevation and associated works, and proposed opening hours 08:00 to 15:00.",
+    "address": "440 Gower Road Killay Swansea SA2 7AJ",
+    "postcode": "SA2 7AJ",
+    "link": "https://www.planit.org.uk/planapplic/Swansea/2026/1564/FUL/",
+    "url": "https://property.swansea.gov.uk/online-applications/applicationDetails.do?activeTab=summary&keyVal=TLWZ72EV00E00",
+    "last_changed": "2026-10-20T08:32:07.745706",
+    "other_fields": {
+     "applicant_name": "See source",
+     "date_received": "2026-09-25"
+    }
+   },
+   {
+    "name": "Swansea/2026/1354/FUL",
+    "uid": "2026/1354/FUL",
+    "reference": null,
+    "area_name": "Swansea",
+    "area_id": 407,
+    "start_date": "2026-08-18",
+    "decided_date": null,
+    "app_type": "Full",
+    "app_state": "Undecided",
+    "app_size": "Small",
+    "description": "Change of use of restaurant and flat to a 6 person HMO (Class C4) and a 7 person HMO (Unique Use) and minor external alterations",
+    "address": "Pantygwydr Restaurant Oxford Street Swansea SA1 3JA",
+    "postcode": "SA1 3JA",
+    "link": "https://www.planit.org.uk/planapplic/Swansea/2026/1354/FUL/",
+    "url": "https://property.swansea.gov.uk/online-applications/applicationDetails.do?activeTab=summary&keyVal=TJYBENEVGTP00",
+    "last_changed": "2026-10-20T08:32:07.390441",
+    "other_fields": {
+     "applicant_name": "See source",
+     "date_received": "2026-08-18"
+    }
+   },
+   {
+    "name": "Swansea/2026/1271/FUL",
+    "uid": "2026/1271/FUL",
+    "reference": null,
+    "area_name": "Swansea",
+    "area_id": 407,
+    "start_date": "2026-08-04",
+    "decided_date": "2026-09-29",
+    "app_type": "Full",
+    "app_state": "Permitted",
+    "app_size": "Small",
+    "description": "Retention of enclosure of previously approved pergola structure with additional fencing to create private hire venue, storage area and mobile bar.",
+    "address": "41 Bishopston Road Bishopston Swansea SA3 3EJ",
+    "postcode": "SA3 3EJ",
+    "link": "https://www.planit.org.uk/planapplic/Swansea/2026/1271/FUL/",
+    "url": "https://property.swansea.gov.uk/online-applications/applicationDetails.do?keyVal=TJ96IQEVG1S00&activeTab=summary",
+    "last_changed": "2026-10-15T09:18:57.649678",
+    "other_fields": {
+     "applicant_name": "See source",
+     "date_received": "2026-08-04"
+    }
+   },
+   {
+    "name": "Swansea/2026/1173/FUL",
+    "uid": "2026/1173/FUL",
+    "reference": null,
+    "area_name": "Swansea",
+    "area_id": 407,
+    "start_date": "2026-07-14",
+    "decided_date": null,
+    "app_type": "Full",
+    "app_state": "Undecided",
+    "app_size": "Small",
+    "description": "Change of use of first floor restaurant to a beauty training academy & treatment rooms",
+    "address": "Crown Inn 344 Birchgrove Road Birchgrove Swansea SA7 9NN",
+    "postcode": "SA7 9NN",
+    "link": "https://www.planit.org.uk/planapplic/Swansea/2026/1173/FUL/",
+    "url": "https://property.swansea.gov.uk/online-applications/applicationDetails.do?activeTab=summary&keyVal=TI5XZPEVMH000",
+    "last_changed": "2026-10-21T08:27:16.893912",
+    "other_fields": {
+     "applicant_name": "See source",
+     "date_received": "2026-07-14"
+    }
+   },
+   {
+    "name": "Swansea/2026/1118/FUL",
+    "uid": "2026/1118/FUL",
+    "reference": null,
+    "area_name": "Swansea",
+    "area_id": 407,
+    "start_date": "2026-07-06",
+    "decided_date": "2026-09-22",
+    "app_type": "Full",
+    "app_state": "Permitted",
+    "app_size": "Small",
+    "description": "Proposed subdivision and part change of use of the former Lloyds Bank premises (Class A2) to an indoor golf simulator facility (Class D2). The development will provide 1 x golf simulator bay for recreational and leisure use, together with waiting area, WC facilities and ancillary storage. An 18 square metre bar is proposed within the existing bank vault, serving alcoholic and non-alcoholic beverages to customers using the facility",
+    "address": "Unit 1, 47 St Teilo Street Pontarddulais Swansea SA4 8SY",
+    "postcode": "SA4 8SY",
+    "link": "https://www.planit.org.uk/planapplic/Swansea/2026/1118/FUL/",
+    "url": "https://property.swansea.gov.uk/online-applications/applicationDetails.do?keyVal=THQORKEVLXN00&activeTab=summary",
+    "last_changed": "2026-10-12T08:41:32.537483",
+    "other_fields": {
+     "applicant_name": "See source",
+     "date_received": "2026-07-06"
+    }
+   },
+   {
+    "name": "Swansea/2026/1062/FUL",
+    "uid": "2026/1062/FUL",
+    "reference": null,
+    "area_name": "Swansea",
+    "area_id": 407,
+    "start_date": "2026-06-25",
+    "decided_date": null,
+    "app_type": "Full",
+    "app_state": "Undecided",
+    "app_size": "Small",
+    "description": "First floor extension on top of existing kitchen, ground floor extension to create cellar and first floor balconies",
+    "address": "Gorseinon Rugby Club Lime Street Gorseinon Swansea SA4 4AD",
+    "postcode": "SA4 4AD",
+    "link": "https://www.planit.org.uk/planapplic/Swansea/2026/1062/FUL/",
+    "url": "https://property.swansea.gov.uk/online-applications/applicationDetails.do?activeTab=summary&keyVal=TH6L9VEV0FN00",
+    "last_changed": "2026-10-21T08:27:16.947457",
+    "other_fields": {
+     "applicant_name": "See source",
+     "date_received": "2026-06-25"
+    }
+   }
+  ]
+ },
+ "Neath": {
+  "from": 0,
+  "to": 3,
+  "total": 3,
+  "records": [
+   {
+    "name": "Neath/P2026/0534",
+    "uid": "P2026/0534",
+    "reference": null,
+    "area_name": "Neath",
+    "area_id": 408,
+    "start_date": "2026-08-13",
+    "decided_date": null,
+    "app_type": "Full",
+    "app_state": "Undecided",
+    "app_size": "Medium",
+    "description": "Change of use of ground floor unit from class A1 (shop) to class A3 (food and drink), alterations to shopfront and installation of extraction flue to rear",
+    "address": "188 Water Street Aberavon Neath Port Talbot SA12 6LL",
+    "postcode": "SA12 6LL",
+    "link": "https://www.planit.org.uk/planapplic/Neath/P2026/0534/",
+    "url": "https://planningonline.npt.gov.uk/online-applications/applicationDetails.do?activeTab=summary&keyVal=TJPR2FKZISE00",
+    "last_changed": "2026-10-21T08:10:39.578763",
+    "other_fields": {
+     "applicant_name": "See source",
+     "date_received": "2026-08-13"
+    }
+   },
+   {
+    "name": "Neath/P2026/0480",
+    "uid": "P2026/0480",
+    "reference": null,
+    "area_name": "Neath",
+    "area_id": 408,
+    "start_date": "2026-07-21",
+    "decided_date": "2026-09-22",
+    "app_type": "Full",
+    "app_state": "Permitted",
+    "app_size": "Small",
+    "description": "Part change of use of ground floor from florist shop (Class A1) to cafe (Class A3).",
+    "address": "110 Fairway Sandfields Neath Port Talbot SA12 7HR",
+    "postcode": "SA12 7HR",
+    "link": "https://www.planit.org.uk/planapplic/Neath/P2026/0480/",
+    "url": "https://planningonline.npt.gov.uk/online-applications/applicationDetails.do?keyVal=TIIRTDKZIJW00&activeTab=summary",
+    "last_changed": "2026-10-12T08:26:10.983923",
+    "other_fields": {
+     "applicant_name": "See source",
+     "date_received": "2026-07-21"
+    }
+   },
+   {
+    "name": "Neath/P2026/0448",
+    "uid": "P2026/0448",
+    "reference": null,
+    "area_name": "Neath",
+    "area_id": 408,
+    "start_date": "2026-07-09",
+    "decided_date": "2026-10-01",
+    "app_type": "Full",
+    "app_state": "Permitted",
+    "app_size": "Small",
+    "description": "Change of use from a shop (class A1) to a nail bar (unique use)",
+    "address": "6 Angel Place Neath Neath Port Talbot SA11 1RQ",
+    "postcode": "SA11 1RQ",
+    "link": "https://www.planit.org.uk/planapplic/Neath/P2026/0448/",
+    "url": "https://planningonline.npt.gov.uk/online-applications/applicationDetails.do?keyVal=THWSF7KZ00Z00&activeTab=summary",
+    "last_changed": "2026-10-20T08:12:51.792836",
+    "other_fields": {
+     "applicant_name": "See source",
+     "date_received": "2026-07-09"
+    }
+   }
+  ]
+ },
+ "Carmarthenshire": {
+  "from": 0,
+  "to": 5,
+  "total": 5,
+  "records": [
+   {
+    "name": "Carmarthenshire/PL/11463",
+    "uid": "PL/11463",
+    "reference": null,
+    "area_name": "Carmarthenshire",
+    "area_id": 406,
+    "start_date": "2026-09-24",
+    "decided_date": null,
+    "app_type": "Full",
+    "app_state": "Undecided",
+    "app_size": "Small",
+    "description": "Change of use from retail shop A1 (currently vacant) to constituency office B1",
+    "address": "51 King Street, Carmarthen, SA31 1BH",
+    "postcode": "SA31 1BH",
+    "link": "https://www.planit.org.uk/planapplic/Carmarthenshire/PL/11463/",
+    "url": "https://carmarthenshire.my.site.com/en/s/planning-application/a0bQv00000EedSPIAZ",
+    "last_changed": "2026-10-20T07:41:01.46232",
+    "other_fields": {
+     "applicant_name": "See source",
+     "date_received": "2026-09-24"
+    }
+   },
+   {
+    "name": "Carmarthenshire/PL/11326",
+    "uid": "PL/11326",
+    "reference": null,
+    "area_name": "Carmarthenshire",
+    "area_id": 406,
+    "start_date": "2026-08-26",
+    "decided_date": null,
+    "app_type": "Full",
+    "app_state": "Undecided",
+    "app_size": "Small",
+    "description": "Construction of a commercial kitchen and ancillary caf\u00e9 with associated access and car parking provision (amended scheme to development previously approved under PL/06825)",
+    "address": "Land north of Parc Y Lan, Llangynog, Carmarthen, SA33 5DG",
+    "postcode": "SA33 5DG",
+    "link": "https://www.planit.org.uk/planapplic/Carmarthenshire/PL/11326/",
+    "url": "https://carmarthenshire.my.site.com/en/s/planning-application/a0bQv00000DycpJIAR",
+    "last_changed": "2026-10-20T07:41:01.029831",
+    "other_fields": {
+     "applicant_name": "See source",
+     "date_received": "2026-08-26"
+    }
+   },
+   {
+    "name": "Carmarthenshire/PL/11244",
+    "uid": "PL/11244",
+    "reference": null,
+    "area_name": "Carmarthenshire",
+    "area_id": 406,
+    "start_date": "2026-08-05",
+    "decided_date": null,
+    "app_type": "Full",
+    "app_state": "Undecided",
+    "app_size": "Medium",
+    "description": "Change of use from betting shop (general retail shop ancilliary to the adjoining public house) to a single dwelling",
+    "address": "The Harry Watkins, 2 Millfield Road, Llanelli, SA14 8HY",
+    "postcode": "SA14 8HY",
+    "link": "https://www.planit.org.uk/planapplic/Carmarthenshire/PL/11244/",
+    "url": "https://carmarthenshire.my.site.com/en/s/planning-application/a0bQv00000DZ3ZpIAL",
+    "last_changed": "2026-10-21T07:42:50.603139",
+    "other_fields": {
+     "applicant_name": "See source",
+     "date_received": "2026-08-05"
+    }
+   },
+   {
+    "name": "Carmarthenshire/PL/11216",
+    "uid": "PL/11216",
+    "reference": null,
+    "area_name": "Carmarthenshire",
+    "area_id": 406,
+    "start_date": "2026-07-29",
+    "decided_date": "2026-10-12",
+    "app_type": "Full",
+    "app_state": "Permitted",
+    "app_size": "Medium",
+    "description": "Demolition of existing single storey lean to kitchen, and replace with new 3 storey rear extension",
+    "address": "3 Tunnel Road, Llanelli, SA15 1LE",
+    "postcode": "SA15 1LE",
+    "link": "https://www.planit.org.uk/planapplic/Carmarthenshire/PL/11216/",
+    "url": "https://carmarthenshire.my.site.com/en/s/planning-application/a0bQv00000DSIgtIAH",
+    "last_changed": "2026-10-20T07:41:00.90367",
+    "other_fields": {
+     "applicant_name": "See source",
+     "date_received": "2026-07-29"
+    }
+   },
+   {
+    "name": "Carmarthenshire/PL/11095",
+    "uid": "PL/11095",
+    "reference": null,
+    "area_name": "Carmarthenshire",
+    "area_id": 406,
+    "start_date": "2026-06-30",
+    "decided_date": "2026-09-01",
+    "app_type": "Full",
+    "app_state": "Permitted",
+    "app_size": "Medium",
+    "description": "Change of use of former retail premises to form additional seating area / lounge to adjoining public house (public house and retail premises under same ownership)",
+    "address": "123 Rhosmaen Street, Llandeilo, SA19 6EN",
+    "postcode": "SA19 6EN",
+    "link": "https://www.planit.org.uk/planapplic/Carmarthenshire/PL/11095/",
+    "url": "https://carmarthenshire.my.site.com/en/s/planning-application/a0bQv00000Coz1YIAR",
+    "last_changed": "2026-09-15T07:41:48.833623",
+    "other_fields": {
+     "applicant_name": "See source",
+     "date_received": "2026-06-30"
+    }
+   }
+  ]
+ },
+ "Bridgend": {
+  "from": 0,
+  "to": 4,
+  "total": 4,
+  "records": [
+   {
+    "name": "Bridgend/P/26/523/FUL",
+    "uid": "P/26/523/FUL",
+    "reference": null,
+    "area_name": "Bridgend",
+    "area_id": 409,
+    "start_date": "2026-09-17",
+    "decided_date": null,
+    "app_type": "Full",
+    "app_state": "Undecided",
+    "app_size": "Small",
+    "description": "Convert and extend public house to form two dwellings (as per previous application P/12/345/FUL)",
+    "address": "Greenmeadow Inn Green Meadow Terrace Llangeinor CF32 8PD",
+    "postcode": "CF32 8PD",
+    "link": "https://www.planit.org.uk/planapplic/Bridgend/P/26/523/FUL/",
+    "url": "https://planning.bridgend.gov.uk/Planning/Display/P/26/523/FUL",
+    "last_changed": "2026-10-21T07:38:57.935505",
+    "other_fields": {
+     "applicant_name": "See source",
+     "date_received": "2026-09-17"
+    }
+   },
+   {
+    "name": "Bridgend/P/26/506/FUL",
+    "uid": "P/26/506/FUL",
+    "reference": null,
+    "area_name": "Bridgend",
+    "area_id": 409,
+    "start_date": "2026-09-10",
+    "decided_date": null,
+    "app_type": "Full",
+    "app_state": "Undecided",
+    "app_size": "Small",
+    "description": "Change of use to cafe and bar on ground floor, function rooms on first floor with 2 bedroom living unit on second floor and external alterations including new shopfront, external staircase to rear and new window openings",
+    "address": "11 Adare Street Bridgend CF31 1ET",
+    "postcode": "CF31 1ET",
+    "link": "https://www.planit.org.uk/planapplic/Bridgend/P/26/506/FUL/",
+    "url": "https://planning.bridgend.gov.uk/Planning/Display/P/26/506/FUL",
+    "last_changed": "2026-10-17T11:03:13.235613",
+    "other_fields": {
+     "applicant_name": "See source",
+     "date_received": "2026-09-10"
+    }
+   },
+   {
+    "name": "Bridgend/P/26/482/FUL",
+    "uid": "P/26/482/FUL",
+    "reference": null,
+    "area_name": "Bridgend",
+    "area_id": 409,
+    "start_date": "2026-09-01",
+    "decided_date": null,
+    "app_type": "Full",
+    "app_state": "Undecided",
+    "app_size": "Small",
+    "description": "Proposed change of use of A1 shop to A3 hot food cafe with minor internal alterations.",
+    "address": "90A John Street, Porthcawl, CF36 3DT",
+    "postcode": "CF36 3DT",
+    "link": "https://www.planit.org.uk/planapplic/Bridgend/P/26/482/FUL/",
+    "url": "https://planning.bridgend.gov.uk/Planning/Display/P/26/482/FUL",
+    "last_changed": "2026-10-20T07:36:38.083575",
+    "other_fields": {
+     "applicant_name": "See source",
+     "date_received": "2026-09-01"
+    }
+   },
+   {
+    "name": "Bridgend/P/26/373/FUL",
+    "uid": "P/26/373/FUL",
+    "reference": null,
+    "area_name": "Bridgend",
+    "area_id": 409,
+    "start_date": "2026-07-06",
+    "decided_date": "2026-10-19",
+    "app_type": "Full",
+    "app_state": "Conditions",
+    "app_size": "Medium",
+    "description": "Change of use from cafe back to residential",
+    "address": "The Brothers Cafe, 15 Ogwy Street, Price Town, Nant-Y-Moel, CF32 7SE",
+    "postcode": "CF32 7SE",
+    "link": "https://www.planit.org.uk/planapplic/Bridgend/P/26/373/FUL/",
+    "url": "https://planning.bridgend.gov.uk/Planning/Display/P/26/373/FUL",
+    "last_changed": "2026-10-21T07:38:57.75212",
+    "other_fields": {
+     "applicant_name": "See source",
+     "date_received": "2026-07-06"
+    }
+   }
+  ]
+ },
+ "Powys": {
+  "from": 0,
+  "to": 3,
+  "total": 3,
+  "records": [
+   {
+    "name": "Powys/P/26/1098/FUL",
+    "uid": "P/26/1098/FUL",
+    "reference": null,
+    "area_name": "Powys",
+    "area_id": 418,
+    "start_date": "2026-09-28",
+    "decided_date": null,
+    "app_type": "Full",
+    "app_state": "Undecided",
+    "app_size": "Small",
+    "description": "Change of use from factory to a children\u2019s soft play facility with an ancillary caf\u00e9.",
+    "address": "UNIT 11, WOODLANDS BUSINESS PARK, YSTRADGYNLAIS",
+    "postcode": null,
+    "link": "https://www.planit.org.uk/planapplic/Powys/P/26/1098/FUL/",
+    "url": "https://service.powys.gov.uk/pr/s/detail/a1EWS000002oZuH2AU",
+    "last_changed": "2026-10-21T08:16:15.872689",
+    "other_fields": {
+     "applicant_name": "See source",
+     "date_received": "2026-09-28"
+    }
+   },
+   {
+    "name": "Powys/P/26/1032/FUL",
+    "uid": "P/26/1032/FUL",
+    "reference": null,
+    "area_name": "Powys",
+    "area_id": 418,
+    "start_date": "2026-09-17",
+    "decided_date": null,
+    "app_type": "Full",
+    "app_state": "Undecided",
+    "app_size": "Small",
+    "description": "Change of use from retail shop to a takeaway",
+    "address": "WYE COTTAGE, NORTH STREET, RHAYADER",
+    "postcode": null,
+    "link": "https://www.planit.org.uk/planapplic/Powys/P/26/1032/FUL/",
+    "url": "https://service.powys.gov.uk/pr/s/detail/a1EWS000002mumj2AA",
+    "last_changed": "2026-10-20T08:20:17.308744",
+    "other_fields": {
+     "applicant_name": "See source",
+     "date_received": "2026-09-17"
+    }
+   },
+   {
+    "name": "Powys/P/26/0620/FUL",
+    "uid": "P/26/0620/FUL",
+    "reference": null,
+    "area_name": "Powys",
+    "area_id": 418,
+    "start_date": "2026-07-14",
+    "decided_date": null,
+    "app_type": "Full",
+    "app_state": "Undecided",
+    "app_size": "Small",
+    "description": "Partial change of use of gym to include caf\u00e9",
+    "address": "The Fox Complex, Transformer Fitness, Severn Road, Welshpool, SY21 7AZ",
+    "postcode": "SY21 7AZ",
+    "link": "https://www.planit.org.uk/planapplic/Powys/P/26/0620/FUL/",
+    "url": "https://service.powys.gov.uk/pr/s/detail/a1EWS000002a6Tx2AI",
+    "last_changed": "2026-10-20T08:20:17.247459",
+    "other_fields": {
+     "applicant_name": "See source",
+     "date_received": "2026-07-14"
+    }
+   }
+  ]
+ }
+}
