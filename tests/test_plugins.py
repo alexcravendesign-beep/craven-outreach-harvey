@@ -290,3 +290,8 @@ def test_discover_command_sees_a_plugins_provider(tmp_path, monkeypatch, capsys)
         assert "Unknown provider" not in out
     finally:
         D.PROVIDERS.pop("fake_owned", None)
+
+
+def test_cycle_hooks_registry_exists_and_is_empty_by_default():
+    from harvey import main
+    assert main.CYCLE_HOOKS == []

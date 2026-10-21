@@ -41,11 +41,25 @@ class CravenDiscoveryConfig(BaseModel):
     chain_domain_threshold: int = 2
 
 
+class CravenEnrichmentConfig(BaseModel):
+    # FHRS (Food Hygiene Rating Scheme) local authorities covering the pilot
+    # area; each is one API call of up to 5,000 establishments, cached.
+    fhrs_authority_ids: list[int] = [351, 346, 341, 349]  # Swansea, Neath Port Talbot, Carmarthenshire, Powys
+    fhrs_cache_days: int = 7
+    fhrs_match_floor: float = 0.75
+    # Companies House: hospitality SIC codes and the area for the new-company sweep.
+    companies_house_sic: list[str] = ["56101", "56102", "56103", "56301", "55100", "47110"]
+    companies_house_location: str = "Swansea"
+    companies_house_sweep_days: int = 180
+    recheck_days: int = 90
+
+
 class CravenConfig(BaseModel):
     tenant: str = "craven"
     compliance: CravenComplianceConfig = CravenComplianceConfig()
     deliverability: CravenDeliverabilityConfig = CravenDeliverabilityConfig()
     discovery: CravenDiscoveryConfig = CravenDiscoveryConfig()
+    enrichment: CravenEnrichmentConfig = CravenEnrichmentConfig()
 
 
 def parse_craven_config(section: dict) -> CravenConfig:

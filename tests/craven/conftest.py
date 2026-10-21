@@ -65,6 +65,10 @@ class FakeSupabase:
         if pc.startswith("like."):
             prefix = pc[5:].rstrip("*")
             rows = [r for r in rows if (r.get("postcode") or "").startswith(prefix)]
+        ids = q.get("id", "")
+        if ids.startswith("in.("):
+            wanted = set(ids[4:-1].split(","))
+            rows = [r for r in rows if str(r.get("id")) in wanted]
         rng = request.headers.get("Range", "0-999")
         start, end = (int(x) for x in rng.split("-"))
         chunk = rows[start:end + 1]

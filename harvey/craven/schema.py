@@ -9,7 +9,7 @@ import logging
 
 logger = logging.getLogger("harvey.craven.schema")
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 
 STATEMENTS = [
     # One row per suppressed address or domain. value is lower-cased.
@@ -39,6 +39,16 @@ STATEMENTS = [
         campaign_id TEXT PRIMARY KEY,
         lia_ref TEXT NOT NULL,
         recorded_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )""",
+    # One row per (company, enrichment source): when it was last tried and
+    # whether it matched, so a no-match is remembered, not retried every cycle.
+    """CREATE TABLE IF NOT EXISTS craven_enrichment (
+        company_id TEXT NOT NULL,
+        source TEXT NOT NULL,
+        checked_at TEXT NOT NULL,
+        matched INTEGER NOT NULL DEFAULT 0,
+        detail TEXT NOT NULL DEFAULT '',
+        PRIMARY KEY (company_id, source)
     )""",
 ]
 

@@ -77,6 +77,41 @@ def cmd_sync(args):
     asyncio.run(go())
 
 
+def cmd_fhrs(args):
+    _, state, settings = _boot()
+
+    async def go():
+        from harvey.craven.collectors.fhrs import enrich_fhrs
+        from harvey.craven.schema import ensure_schema
+        from harvey.craven.supabase import SupabaseRest
+        await state.init_db(); await ensure_schema(state)
+        print(await enrich_fhrs(state, settings, SupabaseRest.from_env(), limit=args.limit))
+    asyncio.run(go())
+
+
+def cmd_companies_house(args):
+    _, state, settings = _boot()
+
+    async def go():
+        from harvey.craven.collectors.companies_house import enrich_companies_house
+        from harvey.craven.schema import ensure_schema
+        from harvey.craven.supabase import SupabaseRest
+        await state.init_db(); await ensure_schema(state)
+        print(await enrich_companies_house(state, settings, SupabaseRest.from_env(), limit=args.limit))
+    asyncio.run(go())
+
+
+def cmd_sweep(args):
+    _, state, settings = _boot()
+
+    async def go():
+        from harvey.craven.collectors.companies_house import sweep_new_incorporations
+        from harvey.craven.schema import ensure_schema
+        await state.init_db(); await ensure_schema(state)
+        print(await sweep_new_incorporations(state, settings))
+    asyncio.run(go())
+
+
 def cmd_check(args):
     _, state, settings = _boot()
     from harvey.craven import compliance
@@ -108,6 +143,17 @@ def main(argv=None):
     sup.set_defaults(func=cmd_suppress)
 
     subs.add_parser("sync", help="pull the suppression list from Supabase").set_defaults(func=cmd_sync)
+
+    f = subs.add_parser("fhrs", help="match venues to the Food Hygiene Rating Scheme (open data)")
+    f.add_argument("--limit", type=int, default=500)
+    f.set_defaults(func=cmd_fhrs)
+
+    ch = subs.add_parser("companies-house", help="match venues to Companies House (needs COMPANIES_HOUSE_API_KEY)")
+    ch.add_argument("--limit", type=int, default=100)
+    ch.set_defaults(func=cmd_companies_house)
+
+    sw = subs.add_parser("sweep-new-companies", help="new hospitality incorporations in the area (Companies House)")
+    sw.set_defaults(func=cmd_sweep)
 
     chk = subs.add_parser("check", help="classify an address and check suppression")
     chk.add_argument("email")

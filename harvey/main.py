@@ -48,6 +48,12 @@ REPLY_READERS = ("handle_replies", "read_replies")
 # ("scout" | "writer" | "sender" | "handler"). Filled by a plugin's install().
 AGENT_OVERRIDES: dict[str, type] = {}
 
+# Extra work that rides along every cycle beside profiling: ``(name, factory)``
+# pairs where ``factory(state, config)`` returns a coroutine. For free,
+# model-less collectors a plugin adds (public registries, open data). Each is
+# bounded by the cycle timeout like any other task.
+CYCLE_HOOKS: list[tuple[str, object]] = []
+
 
 def in_quiet_hours(config: HarveyConfig) -> bool:
     """Check if we're currently in quiet hours."""
@@ -350,6 +356,8 @@ async def heartbeat(stop_event: asyncio.Event | None = None):
             # turns a name and a domain into something worth writing about.
             if summary.get("unprofiled", 0):
                 tasks.append(("profile", run_profile_stage(state, limit=25)))
+            for hook_name, factory in CYCLE_HOOKS:
+                tasks.append((hook_name, factory(state, config)))
 
             outcomes = await _run_agents(tasks)
 

@@ -48,6 +48,12 @@ def install(config, raw: dict) -> None:
     )
     discover.PROVIDERS[provider.key] = provider
     discover.DEFAULT_PROVIDER = provider.key  # harvest from what we own first
+    from harvey.collectors import profile
+    from harvey.craven.enrich import cycle_hook
+    from harvey.craven.profile import CravenProfileCollector
+    profile.COLLECTOR_CLASS = CravenProfileCollector
+    if not any(name == "craven_enrich" for name, _ in main.CYCLE_HOOKS):
+        main.CYCLE_HOOKS.append(("craven_enrich", cycle_hook))
     logger.info(
         "Craven plugin installed (tenant=%s, corporate_subscribers_only=%s)",
         SETTINGS.tenant, SETTINGS.compliance.corporate_subscribers_only,
