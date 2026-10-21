@@ -5,6 +5,7 @@ Harvey's CLI stays untouched).
   harvey-craven lia show --ref lia-1
   harvey-craven suppress --email info@x.co [--reason manual] | --domain x.co
   harvey-craven sync                      # pull the suppression list from Supabase
+  harvey-craven sync-geo                  # copy venue coordinates (pois) into craven_geo for the map
   harvey-craven check <email>             # is this address suppressed / a role mailbox?
   harvey-craven licensing [--council npt] # council premises licence notices -> signals / new companies
   harvey-craven planning [--area Swansea] # PlanIt planning applications -> signals / new companies
@@ -76,6 +77,23 @@ def cmd_sync(args):
             sys.exit("SUPABASE_URL / SUPABASE_SERVICE_KEY not set.")
         n = await sup.sync()
         print(f"Merged {n} row(s). Mirror holds {await sup.count()}; last sync {await sup.synced_at()}.")
+    asyncio.run(go())
+
+
+def cmd_sync_geo(args):
+    _, state, settings = _boot()
+
+    async def go():
+        from harvey.craven.geo import sync_geo
+        from harvey.craven.schema import ensure_schema
+        from harvey.craven.supabase import SupabaseRest
+        await state.init_db(); await ensure_schema(state)
+        sb = SupabaseRest.from_env()
+        if sb is None:
+            sys.exit("SUPABASE_URL / SUPABASE_SERVICE_KEY not set.")
+        out = await sync_geo(state, sb, limit=args.limit)
+        print(f"Placed {out['placed']} of {out['companies']} companies on the map; "
+              f"{out['missing']} have no coordinates in pois.")
     asyncio.run(go())
 
 
@@ -211,6 +229,10 @@ def main(argv=None):
     sup.set_defaults(func=cmd_suppress)
 
     subs.add_parser("sync", help="pull the suppression list from Supabase").set_defaults(func=cmd_sync)
+
+    sg = subs.add_parser("sync-geo", help="copy venue coordinates from pois into craven_geo (the dashboard map)")
+    sg.add_argument("--limit", type=int, default=None, help="only this many companies (default: all)")
+    sg.set_defaults(func=cmd_sync_geo)
 
     f = subs.add_parser("fhrs", help="match venues to the Food Hygiene Rating Scheme (open data)")
     f.add_argument("--limit", type=int, default=500)

@@ -5,6 +5,13 @@
 
 plugins: [harvey.craven]
 
+# The office uses the Outbox desk from the showroom over Tailscale. The
+# dashboard still binds loopback; `tailscale serve --bg --https=8443 5555` on
+# the mini fronts it with TLS, and this is the Host that front presents.
+# Trusted private network only; never a public name. See README, "The dashboard".
+dashboard:
+  extra_hosts: [nicks-mac-mini.tailbdd36b.ts.net:8443]
+
 persona:
   name: "Alex Craven"
   company: "Craven Cooling"

@@ -354,6 +354,15 @@ harvey dashboard     # prints the link to open, e.g. http://127.0.0.1:5555/#toke
 
 **It only listens on this machine.** `--host` accepts loopback addresses only (`127.0.0.1`, `::1`, `localhost`), and requests must name one of them in their `Host` header, which also stops a DNS name pointed at 127.0.0.1 from reaching it. Requests sent by other websites open in your browser are refused. To use it from another computer, tunnel instead of exposing it: `ssh -L 5555:127.0.0.1:5555 your-machine`, then open the printed link locally. The token protects against other users and other websites, not against programs already running as your own user account, which can read the token file just as they can read `.env` or the database.
 
+**A team on a private network (Tailscale).** The dashboard never binds anything but loopback, but it can answer to one or more extra names when a TLS front on the same machine forwards to it. List them under `dashboard.extra_hosts` in `harvey.yaml` (or `harvey.local.yaml`), each exactly as a browser will send the `Host` header, port included:
+
+```yaml
+dashboard:
+  extra_hosts: [nicks-mac-mini.tailbdd36b.ts.net:8443]
+```
+
+Then put Tailscale Serve in front of it on that machine: `tailscale serve --bg --https=8443 5555`. Tailscale terminates TLS with a certificate for the machine's tailnet name and forwards to `127.0.0.1:5555`, so colleagues open `https://nicks-mac-mini.tailbdd36b.ts.net:8443/#token=…` (the same token, from `harvey dashboard --url` with the host swapped) from any device on the tailnet. Requests from such a host must carry an `https://` Origin naming that exact host; any other `Host` is still refused with 400, any other Origin with 403, and the token is required exactly as before. This is for a **trusted private network only**: an extra host is a name only your tailnet can resolve and reach, never a public hostname, and Tailscale's own ACLs decide who can reach the machine at all. Never pair this with a public tunnel or a port-forward.
+
 **Windows:** the token file is protected by the permissions of the folder it lives in (your user profile normally restricts this to you); Harvey doesn't apply POSIX file modes there.
 
 Plain HTML, CSS and JavaScript served from `harvey/web/`. No build step, no framework, no bundler — edit `app.css` and reload. Fonts are vendored, so it renders correctly with the network off.
@@ -361,8 +370,9 @@ Plain HTML, CSS and JavaScript served from `harvey/web/`. No build step, no fram
 - **Today** — an asymmetric two-column screen: anything waiting on a decision down the left with the activity feed beneath it, and a rail carrying pipeline figures, collector runs and setup. It opens here rather than on a setup checklist, because the question you actually have is "is anything waiting on me?" Setup lives in the rail and disappears entirely once it's done.
 - **Signals** — the confirmation gate and the cohort builder
 - **Discover** — the provider menu with prices side by side, an estimate, then a run
-- **Companies / Contacts** — everything found, with CSV export
-- **Outbox** — the decisions desk
+- **Companies / Contacts** — everything found, with CSV export. Clicking a company opens its **venue page**: the latest observation per signal with its evidence link, confidence and collector, the plugin's document about the venue as plain facts, its mailbox and every draft written to it. Signals the plugin marks reviewer-only (Craven: the hygiene rating and its sub-scores) are labelled so, because they never go into an email.
+- **Map** — every placed company as a pin, coloured by reachability (verified or catch-all mailbox, unverified mailbox, none) using the status tones; click a pin for its venue page. Coordinates come from a plugin's geo table (Craven: `harvey-craven sync-geo` fills `craven_geo` from the owned `pois` rows). Existing customers are suppressed addresses, not companies, so they appear as a figure beside the map and never as pins. Leaflet is vendored under `harvey/web/vendor/`, so scripts stay `'self'`; the basemap tiles are the one external host the page loads from (`https://tile.openstreetmap.org`, images only, allowed in the CSP's `img-src`), fetched by the browser with no credentials; dark mode darkens the same tiles with a CSS filter rather than fetching a keyed dark tile set.
+- **Outbox** — the decisions desk. Each draft links to its venue page; **Reject** asks for a reason (optional), kept as feedback on the draft so the patterns behind rejections can be read back and tuned. The cohort builder's **Draft 20** stages up to 20 grounded first emails for cohort companies that have a mailbox and no first email yet, all `pending_review`; it refuses with the reason when the model can't be used (the dashboard must run in a logged-in desktop session for `claude` to read its login).
 - **Conversations** — every reply and how Harvey handled it
 - **Usage** — Claude or Codex quota gauges and per-agent token counts. No dollar figures: you're on a subscription, you aren't billed per token, and pretending otherwise would be theater.
 
