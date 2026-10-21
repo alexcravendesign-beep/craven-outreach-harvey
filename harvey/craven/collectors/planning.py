@@ -233,8 +233,12 @@ async def record_applications(state, supabase, items: list[tuple[dict, str, str]
                     continue
         row = observation_for(r, kind, detail, company_id, confidence, run_id)
         if row["signal_code"] in confirmed:
-            obs_total += await state.add_observations([row], run_id=run_id)
-        await mark_enrichment(state, company_id, marker, True, f"{kind}: {detail} ({confidence:.2f})")
+            written = await state.add_observations([row], run_id=run_id)
+            obs_total += written
+            if written:
+                # the marker only once the observation exists: an application seen before
+                # its signal was confirmed is recorded on the first run after confirmation
+                await mark_enrichment(state, company_id, marker, True, f"{kind}: {detail} ({confidence:.2f})")
         if is_match:
             matched += 1
     return {"applications": len(items), "in_area": len(kept), "matched": matched, "created": created,

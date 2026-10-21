@@ -111,6 +111,20 @@ amended), which is why all five publish *something*.
   fetches directly; if Cloudflare starts refusing httpx too, it logs the
   403 and reads a **drop folder** `data/licensing/swansea/inbox/`
   (`index.html` plus the linked files, saved from a browser).
+- **The mini is blocked, the Studio is not (21 Oct 2026, 18:20):** the same
+  Fetcher gets 403 from the Mac mini that runs the collector and the page
+  (33,920 bytes) from the Studio. So the Studio feeds the drop folder:
+  `harvey/craven/collectors/swansea_feed.py` (launchd agent
+  `com.8zero8.craven-swansea-feed`, daily 07:00, plist under
+  `services/launchd/`) fetches the page and every linked document with the
+  collector's Fetcher, writes them in the inbox layout
+  (`index.html` + `<last path segment of the link, no query>`), and scps
+  them into `~/Projects/craven-outreach/app/data/licensing/swansea/inbox/`
+  on the mini. The feed never delivers an index that parsed to no notices.
+  Cloudflare's challenge is state on its side, not the client's: at 18:18
+  the same evening the Studio was challenged too, and a single daily fetch
+  is the polite shape; a 403 on a given morning just leaves yesterday's
+  inbox in place (the collector reads whatever is there).
 - **List markup (verified):** each application is a
   `<div class="item item--media">` with `<h2 class="item__title">RRA RETAIL
   Ltd_55-57 Eversley road, Sketty, Swansea, SA2 9DE (Word)</h2>` and one

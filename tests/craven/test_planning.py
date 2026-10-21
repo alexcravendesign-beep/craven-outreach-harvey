@@ -129,3 +129,32 @@ async def test_enrich_planning_matches_creates_and_reruns_cleanly(state, setting
     again = await enrich_planning(state, settings, sb.client(), areas=["Swansea"], client=client)
     assert again["Swansea"]["already_recorded"] == 2 and again["Swansea"]["observations"] == 0 and again["Swansea"]["created"] == 0
     assert len(await state.get_observations(company_id=rugby)) == 1
+
+
+@pytest.mark.asyncio
+async def test_application_seen_before_confirmation_is_recorded_once_confirmed(state, settings):
+    """The marker is written only with the observation: a run while the signal
+    is still unconfirmed leaves the application open, and the first run after
+    confirmation records it (once)."""
+    from harvey.craven.collectors.planning import record_applications
+    install_signals(); await seed_signal_catalog(state)
+    sb = FakeSupabase(pois=[])
+    r = next(r for r in SAMPLES["Bridgend"]["records"] if r["uid"] == "P/26/482/FUL")
+    items = [(r, "change_of_use", "A3 hot food cafe")]
+    run_id = await state.start_run("planning", provider="test")
+    before = await record_applications(state, sb.client(), items, set(), run_id, await state.confirmed_signal_codes())
+    assert before["created"] == 1 and before["observations"] == 0 and before["already_recorded"] == 0
+    company = await state.get_company_by_external_id("plan:bridgend:P/26/482/FUL")
+    assert await state.get_observations(company_id=company.id) == []
+    async with state._connect() as db:
+        async with db.execute("SELECT 1 FROM craven_enrichment WHERE company_id = ? AND source = ?",
+                              (company.id, "planning:plan:bridgend:P/26/482/FUL")) as cur:
+            assert await cur.fetchone() is None                        # no marker without the observation
+    await state.set_signal_status("PLANNING_CHANGE_OF_USE", "confirmed")
+    after = await record_applications(state, sb.client(), items, set(), run_id, await state.confirmed_signal_codes())
+    assert after["created"] == 0 and after["observations"] == 1 and after["already_recorded"] == 0
+    obs = await state.get_observations(company_id=company.id)
+    assert len(obs) == 1 and obs[0]["signal_code"] == "PLANNING_CHANGE_OF_USE"
+    again = await record_applications(state, sb.client(), items, set(), run_id, await state.confirmed_signal_codes())
+    assert again["already_recorded"] == 1 and again["observations"] == 0
+    assert len(await state.get_observations(company_id=company.id)) == 1

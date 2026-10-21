@@ -558,8 +558,12 @@ async def record_notices(state, supabase, notices: list[Notice], outcodes: set[s
                     continue
         row = observation_for(n, company_id, confidence, run_id)
         if row and row["signal_code"] in confirmed:
-            obs_total += await state.add_observations([row], run_id=run_id)
-        await mark_enrichment(state, company_id, marker, True, f"{n.kind} {n.closing_date} ({confidence:.2f})")
+            written = await state.add_observations([row], run_id=run_id)
+            obs_total += written
+            if written:
+                # the marker only once the observation exists: a notice seen before its
+                # signal was confirmed is recorded on the first run after confirmation
+                await mark_enrichment(state, company_id, marker, True, f"{n.kind} {n.closing_date} ({confidence:.2f})")
         if is_match:
             matched += 1
     return {"notices": len(notices), "in_area": len(kept), "matched": matched, "created": created,

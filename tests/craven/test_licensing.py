@@ -274,3 +274,31 @@ def test_swansea_notice_template_reads_the_english_half():
     assert v["activities"][2].startswith("To amend the existing conditions") and v["closing_date"] == "2026-11-04"
     # the Welsh half says "amrywio" (vary) on a grant notice: only the English half is believed
     assert "HYSBYSIAD O GAIS I AMRYWIO" in fixture("swansea_notice_grant.txt")
+
+
+@pytest.mark.asyncio
+async def test_notice_seen_before_confirmation_is_recorded_once_confirmed(state, settings):
+    """The marker is written only with the observation: a run while the signal
+    is still unconfirmed leaves the notice open, and the first run after
+    confirmation records it (once)."""
+    install_signals(); await seed_signal_catalog(state)
+    sb = FakeSupabase(pois=[])
+    notices = [Notice("npt", "zwdlbqy2", "grant", "Chicken Valley", "3 The Parade, Neath", "SA11 1PU", "A",
+                      ["Late Night Refreshment"], "2026-11-11", "https://npt.example/zwdlbqy2.pdf")]
+    run_id = await state.start_run("licensing", provider="test")
+    before = await record_notices(state, sb.client(), notices, {"SA11"}, run_id, await state.confirmed_signal_codes())
+    assert before["created"] == 1 and before["observations"] == 0 and before["already_recorded"] == 0
+    company = await state.get_company_by_external_id("lic:npt:zwdlbqy2")
+    assert await state.get_observations(company_id=company.id) == []
+    async with state._connect() as db:
+        async with db.execute("SELECT 1 FROM craven_enrichment WHERE company_id = ? AND source = ?",
+                              (company.id, "licensing:lic:npt:zwdlbqy2")) as cur:
+            assert await cur.fetchone() is None                        # no marker without the observation
+    await state.set_signal_status("NEW_PREMISES_LICENCE_APPLICATION", "confirmed")
+    after = await record_notices(state, sb.client(), notices, {"SA11"}, run_id, await state.confirmed_signal_codes())
+    assert after["created"] == 0 and after["observations"] == 1 and after["already_recorded"] == 0
+    obs = await state.get_observations(company_id=company.id)
+    assert len(obs) == 1 and obs[0]["signal_code"] == "NEW_PREMISES_LICENCE_APPLICATION"
+    again = await record_notices(state, sb.client(), notices, {"SA11"}, run_id, await state.confirmed_signal_codes())
+    assert again["already_recorded"] == 1 and again["observations"] == 0
+    assert len(await state.get_observations(company_id=company.id)) == 1
