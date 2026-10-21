@@ -112,6 +112,25 @@ def cmd_sweep(args):
     asyncio.run(go())
 
 
+def cmd_draft(args):
+    config, state, settings = _boot()
+
+    async def go():
+        from harvey.brain import Brain
+        from harvey.config import load_env
+        from harvey.craven.writer import draft_one
+        await state.init_db()
+        brain = Brain(state, config.brain)
+        for cid in args.company:
+            out = await draft_one(state, brain, config, load_env(), cid, settings=settings)
+            if out is None:
+                print(f"{cid}: no draft (no prospect, no usable signal, or the model gave nothing)")
+                continue
+            print(f"\n=== {out['company']} -> {out['to']} [{out['email_status']}] lead={out['lead']} outbox={out['outbox_id']}")
+            print(f"Subject: {out['subject']}\n\n{out['body']}\n")
+    asyncio.run(go())
+
+
 def cmd_check(args):
     _, state, settings = _boot()
     from harvey.craven import compliance
@@ -154,6 +173,10 @@ def main(argv=None):
 
     sw = subs.add_parser("sweep-new-companies", help="new hospitality incorporations in the area (Companies House)")
     sw.set_defaults(func=cmd_sweep)
+
+    dr = subs.add_parser("draft", help="write one grounded first email for a company into the Outbox (pending review; never sends)")
+    dr.add_argument("--company", action="append", required=True, help="company id (repeatable)")
+    dr.set_defaults(func=cmd_draft)
 
     chk = subs.add_parser("check", help="classify an address and check suppression")
     chk.add_argument("email")

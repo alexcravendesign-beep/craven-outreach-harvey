@@ -164,7 +164,7 @@ async def test_craven_scout_turns_role_mailboxes_into_nameless_prospects(state, 
     assert swan.first_name == "" and swan.title == "General enquiries mailbox"
     assert swan.email_status == "verified" and swan.email_verified is True
     assert prospects["bookings@gowerthai.co.uk"].email_status == "guess"   # honest: no verifier verdict
-    assert swan.company == "The Swan" and swan.source == "overture_role_mailbox"
+    assert swan.company == "The Swan" and swan.source == "company_inbox"
     assert "info@late.co.uk" not in prospects
 
     await scout.run()   # idempotent: nothing to add, nothing duplicated

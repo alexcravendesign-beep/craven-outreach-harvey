@@ -34,7 +34,7 @@ product:
     goal: "get_reply"
     booking_method: "ask_preference"
     meeting_duration: "15 minutes"
-    meeting_owner: ""                                      # the named human who takes the call
+    meeting_owner: "Lisa"                                  # sales and customer service (brain: craven-team); Kyle for installs
 
 icp:
   industries: [pub, bar, cafe, restaurant, hotel, fast_food, butcher, farm_shop, convenience, deli, bakery]

@@ -40,6 +40,9 @@ def install(config, raw: dict) -> None:
     main.AGENT_OVERRIDES["sender"] = CravenSender
     main.AGENT_OVERRIDES["handler"] = CravenHandler
     main.AGENT_OVERRIDES["scout"] = CravenScout
+    from harvey.craven.writer import CravenWriter
+    main.AGENT_OVERRIDES["writer"] = CravenWriter
+    _install_skills()
     install_signals()
     provider = OvertureSupabase(
         tenant=SETTINGS.tenant,
@@ -58,3 +61,22 @@ def install(config, raw: dict) -> None:
         "Craven plugin installed (tenant=%s, corporate_subscribers_only=%s)",
         SETTINGS.tenant, SETTINGS.compliance.corporate_subscribers_only,
     )
+
+
+def _install_skills() -> None:
+    """Copy the plugin's hand-written skills (product_knowledge, competitive_intel)
+    into Harvey's skills/ (gitignored there as trainer output) when missing or
+    older than the plugin's copy, so the writer always reads Craven's truth."""
+    import shutil
+    from pathlib import Path
+    from harvey.paths import PROJECT_ROOT
+    src_dir = Path(__file__).parent / "skills"
+    dst_dir = PROJECT_ROOT / "skills"
+    for src in src_dir.glob("*.md"):
+        dst = dst_dir / src.name
+        try:
+            if not dst.exists() or dst.stat().st_mtime < src.stat().st_mtime:
+                shutil.copyfile(src, dst)
+        except OSError as e:
+            logger.warning(f"could not install skill {src.name}: {e}")
+

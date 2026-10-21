@@ -14,11 +14,11 @@ from harvey.agents.scout import Scout
 from harvey.craven import compliance
 from harvey.craven.suppression import SuppressionStore
 from harvey.craven.verify import verify_role_email
-from harvey.models.prospect import Prospect
+from harvey.models.prospect import COMPANY_INBOX_SOURCE, Prospect
 
 logger = logging.getLogger("harvey.craven.scout")
 
-SOURCE = "overture_role_mailbox"
+SOURCE = COMPANY_INBOX_SOURCE   # upstream's "company_inbox": the Writer and humanizer then know no name exists
 TITLE = "General enquiries mailbox"
 
 
@@ -79,7 +79,7 @@ class CravenScout(Scout):
                             company=c.get("name") or "", company_id=c["id"],
                             industry=c.get("industry") or "", source=SOURCE,
                             source_url=c.get("website") or "",
-                            personalization_notes="Venue mailbox; write to the business, not a person.",
+                            personalization_notes="Venue mailbox found in the owned venue data; write to the business, not a person.",
                         ))
                         found += 1
                         logger.info(f"Scout (Craven): {c.get('name')} -> {email} [{result.status}]")
