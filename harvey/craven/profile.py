@@ -4,6 +4,10 @@ seller reads on a venue's site — the menu.
 MENU_EQUIPMENT_CLASS names the kit the menu implies (the main copy angle);
 ENERGY_CLAIM notes an energy/sustainability claim. Upstream's own detectors
 still run for whatever upstream signals are confirmed.
+
+A venue that already has a model-read VENUE_DOSSIER (MENU_EQUIPMENT_CLASS
+at 0.9 with the proving line) gains nothing from the 0.65 keyword guess,
+so the heartbeat profiler skips it: marked checked, rotated out, counted.
 """
 
 import logging
@@ -51,10 +55,43 @@ def energy_claim(text: str) -> bool:
     return any(term in t for term in ENERGY_TERMS)
 
 
+DOSSIER_SIGNAL_CODE = "VENUE_DOSSIER"
+
+
+async def companies_with_dossier(state, company_ids: list[str]) -> set[str]:
+    """Which of these companies already carry a VENUE_DOSSIER observation."""
+    ids = [i for i in company_ids if i]
+    out: set[str] = set()
+    async with state._connect() as db:
+        for i in range(0, len(ids), 500):
+            chunk = ids[i:i + 500]
+            async with db.execute(
+                f"SELECT DISTINCT company_id FROM observations WHERE signal_code = ? AND company_id IN ({','.join('?' * len(chunk))})",
+                (DOSSIER_SIGNAL_CODE, *chunk)) as cur:
+                out.update(r[0] for r in await cur.fetchall())
+    return out
+
+
 class CravenProfileCollector(ProfileCollector):
     def __init__(self, state, confirmed=None, timeout: float = 12.0):
         super().__init__(state, confirmed, timeout)
         self._home_cache: dict[str, tuple[str, str]] = {}
+        self.skipped_with_dossier = 0
+
+    async def run(self, companies: list[dict], run_id: str = "") -> int:
+        """Upstream's loop over the companies that have no dossier yet; the
+        rest are marked checked so they rotate out of the backlog."""
+        with_dossier = await companies_with_dossier(self.state, [c.get("id", "") for c in companies])
+        todo = []
+        for c in companies:
+            if c.get("id") in with_dossier:
+                await self._mark_checked(c["id"])
+                self.skipped_with_dossier += 1
+            else:
+                todo.append(c)
+        if with_dossier:
+            logger.info(f"profile: {len(with_dossier)} of {len(companies)} already have a dossier; skipped (marked checked)")
+        return await super().run(todo, run_id=run_id)
 
     async def _resolve_site(self, domain: str) -> tuple[str, str]:
         # Memoised so our extra detectors reuse the homepage upstream fetched.
