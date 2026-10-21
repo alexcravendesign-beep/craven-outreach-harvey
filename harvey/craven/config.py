@@ -22,7 +22,7 @@ class CravenComplianceConfig(BaseModel):
     unsubscribe_base_url: str = ""
     # How stale the local suppression mirror may be before cold sends fail closed.
     max_mirror_age_hours: int = 24
-    sender_legal_name: str = "Craven Cooling Sales Ltd"
+    sender_legal_name: str = "Craven Cooling Services Ltd"
     company_number: str = ""
 
 
