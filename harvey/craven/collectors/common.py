@@ -1,5 +1,6 @@
 """Shared pieces for the Craven enrichment collectors."""
 
+import math
 import re
 from datetime import datetime, timezone
 from difflib import SequenceMatcher
@@ -46,6 +47,61 @@ def name_similarity(a: str, b: str) -> float:
 def normalise_postcode(pc: str) -> str:
     p = re.sub(r"\s+", "", (pc or "").upper())
     return f"{p[:-3]} {p[-3:]}" if len(p) >= 5 else p
+
+
+def haversine_m(lat1: float, lng1: float, lat2: float, lng2: float) -> float:
+    """Great-circle distance in metres between two WGS84 points."""
+    r = 6_371_000.0
+    p1, p2 = math.radians(lat1), math.radians(lat2)
+    dp, dl = math.radians(lat2 - lat1), math.radians(lng2 - lng1)
+    a = math.sin(dp / 2) ** 2 + math.cos(p1) * math.cos(p2) * math.sin(dl / 2) ** 2
+    return 2 * r * math.asin(math.sqrt(a))
+
+
+def parse_latlng(lat, lng) -> tuple[float, float] | None:
+    """A usable (lat, lng) pair or None: FHRS geocodes are strings, pois
+    columns may be null, and (0, 0) is the register's "unknown"."""
+    try:
+        la, ln = float(lat), float(lng)
+    except (TypeError, ValueError):
+        return None
+    if not (-90.0 <= la <= 90.0 and -180.0 <= ln <= 180.0) or (la == 0.0 and ln == 0.0):
+        return None
+    return la, ln
+
+
+class GeoGrid:
+    """Points bucketed by a coarse lat/lng cell so a radius search over
+    10k+ establishments touches nine cells, not the whole register.
+
+    The cell is sized from the radius so that any point within ``radius_m``
+    of a query lies in the query's cell or one of its eight neighbours,
+    anywhere in the UK (a degree of longitude is ~55 km at 61°N)."""
+
+    def __init__(self, radius_m: float):
+        self.radius_m = float(radius_m)
+        self.cell = max(self.radius_m, 1.0) / 50_000.0     # degrees; ≥ radius in both axes up to 63°N
+        self._cells: dict[tuple[int, int], list[tuple[float, float, object]]] = {}
+
+    def _key(self, lat: float, lng: float) -> tuple[int, int]:
+        return math.floor(lat / self.cell), math.floor(lng / self.cell)
+
+    def add(self, lat: float, lng: float, item) -> None:
+        self._cells.setdefault(self._key(lat, lng), []).append((lat, lng, item))
+
+    def near(self, lat: float, lng: float, radius_m: float | None = None) -> list[tuple[float, object]]:
+        """[(distance_m, item)] within the radius, nearest first."""
+        radius = self.radius_m if radius_m is None else float(radius_m)
+        ky, kx = self._key(lat, lng)
+        out = []
+        for dy in (-1, 0, 1):
+            for dx in (-1, 0, 1):
+                for plat, plng, item in self._cells.get((ky + dy, kx + dx), ()):
+                    d = haversine_m(lat, lng, plat, plng)
+                    if d <= radius:
+                        out.append((d, item))
+        out.sort(key=lambda t: t[0])
+        return out
 
 
 def now_iso() -> str:
