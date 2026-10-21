@@ -90,7 +90,7 @@ class OvertureSupabase(DiscoveryProvider):
              "email. No API, no spend, no terms to trip over.")
     cost_note = "free (owned data)"
     free_tier = "unlimited"
-    signup_url = ""
+    signup_url = "https://overturemaps.org"
     env_keys = ()
     caveat = ("Snapshot data: refresh by re-pulling the Overture release. "
               "Shops without a food/drink category are thin. Queries are by "

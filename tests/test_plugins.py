@@ -263,3 +263,30 @@ def test_best_effort_load_without_a_config_file_is_quiet(monkeypatch):
         raise config_mod.ConfigFileNotFoundError("none")
     monkeypatch.setattr(config_mod, "_find_config_file", missing)
     assert config_mod.load_plugins_best_effort() is False
+
+
+def test_discover_command_sees_a_plugins_provider(tmp_path, monkeypatch, capsys):
+    """`harvey discover --provider X` must not reject a provider a plugin registers."""
+    from harvey.collectors import discover as D
+    from harvey import cli
+
+    class Owned(D.DiscoveryProvider):
+        key = "fake_owned"; label = "Fake owned"; kind = "owned"; cost_note = "free"
+        blurb = "fake"; signup_url = "https://example.test"
+
+    def install(cfg, raw):
+        D.PROVIDERS["fake_owned"] = Owned()
+    _fake_module("fake_plugin_f", install=install)
+    path = _write_config(tmp_path, "[fake_plugin_f]")
+    monkeypatch.setattr(config_mod, "_find_config_file", lambda: path)
+    monkeypatch.delitem(D.PROVIDERS, "fake_owned", raising=False)
+
+    class Args:
+        provider = "fake_owned"; providers = False; estimate = True; city = ""
+        depth = 30; limit = 100; max_spend = 1.0; no_profile = True
+    try:
+        cli.cmd_discover(Args())
+        out = capsys.readouterr().out
+        assert "Unknown provider" not in out
+    finally:
+        D.PROVIDERS.pop("fake_owned", None)

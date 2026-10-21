@@ -530,10 +530,12 @@ def cmd_profile(args):
 def cmd_discover(args):
     """Find businesses. The only stage that spends money, so it estimates first."""
     from harvey.state import StateManager
-    from harvey.config import load_config
+    from harvey.config import load_config, load_plugins_best_effort
     from harvey.collectors.discover import (
         PROVIDERS, build_queries, provider_menu, run_discovery,
     )
+
+    load_plugins_best_effort()  # a plugin may register a provider
 
     async def _discover():
         if args.providers:
