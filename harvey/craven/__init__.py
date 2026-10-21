@@ -31,12 +31,23 @@ def install(config, raw: dict) -> None:
     global SETTINGS
     SETTINGS = parse_craven_config(raw.get("craven") or {})
     from harvey import main
+    from harvey.collectors import discover
+    from harvey.craven.discover_overture import OvertureSupabase
     from harvey.craven.handler import CravenHandler
+    from harvey.craven.scout import CravenScout
     from harvey.craven.sender import CravenSender
     from harvey.craven.signals import install_signals
     main.AGENT_OVERRIDES["sender"] = CravenSender
     main.AGENT_OVERRIDES["handler"] = CravenHandler
+    main.AGENT_OVERRIDES["scout"] = CravenScout
     install_signals()
+    provider = OvertureSupabase(
+        tenant=SETTINGS.tenant,
+        chain_domain_threshold=SETTINGS.discovery.chain_domain_threshold,
+        area_outcodes=tuple(getattr(config.icp, "geography", []) or []),
+    )
+    discover.PROVIDERS[provider.key] = provider
+    discover.DEFAULT_PROVIDER = provider.key  # harvest from what we own first
     logger.info(
         "Craven plugin installed (tenant=%s, corporate_subscribers_only=%s)",
         SETTINGS.tenant, SETTINGS.compliance.corporate_subscribers_only,

@@ -43,8 +43,9 @@ class FakeSupabase:
     """Enough of PostgREST for the suppression and lawful-basis stores:
     GET with Range paging and a tenant/at filter, POST upserts recorded."""
 
-    def __init__(self, suppression_rows=None, page=1000):
+    def __init__(self, suppression_rows=None, page=1000, pois=None):
         self.suppression = list(suppression_rows or [])
+        self.pois = list(pois or [])
         self.posts = []
         self.gets = 0
         self.page = page
@@ -55,11 +56,15 @@ class FakeSupabase:
             self.posts.append((table, json.loads(request.content), dict(request.headers)))
             return httpx.Response(201, json=[])
         self.gets += 1
-        rows = self.suppression if table == "oe_suppression" else []
+        rows = {"oe_suppression": self.suppression, "pois": self.pois}.get(table, [])
         q = dict(request.url.params)
         at = q.get("at", "")
         if at.startswith("gt."):
             rows = [r for r in rows if (r.get("at") or "") > at[3:]]
+        pc = q.get("postcode", "")
+        if pc.startswith("like."):
+            prefix = pc[5:].rstrip("*")
+            rows = [r for r in rows if (r.get("postcode") or "").startswith(prefix)]
         rng = request.headers.get("Range", "0-999")
         start, end = (int(x) for x in rng.split("-"))
         chunk = rows[start:end + 1]

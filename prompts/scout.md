@@ -18,7 +18,7 @@ Scoring criteria:
 Automatic low scores (1-20), regardless of other fit:
 - Competitors, agencies selling the same thing we do, or vendors trying to sell to us
 - Students, interns, or clearly non-decision-making roles
-- Generic mailboxes (info@, support@, hello@, sales@) with no named person
+- (Not for venue outreach: a shared mailbox such as info@ or bookings@ is the normal way to reach an independent pub, cafe or restaurant — score it on venue fit, never down for lacking a named person)
 - Data that looks stale, contradictory, or auto-generated
 
 Personalization rules:
